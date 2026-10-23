@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  # Servidor Pyroscope para coletar e exibir os dados
+  pyroscope:
+    image: grafana/pyroscope:latest
+    container_name: pyroscope
+    ports:
+      - "4040:4040"
+    command:
+      - "server"
+
+  # Sua aplicação Spring Boot
+  spring-app:
+    build: .
+    container_name: spring-spring-app
+    ports:
+      - "8080:8080"
+    environment:
+      # Injeta o agente Java nativamente na inicialização da JVM
+      - JAVA_TOOL_OPTIONS=-javaagent:/app/pyroscope.jar
+      
+      # Configurações obrigatórias do Pyroscope
+      - PYROSCOPE_APPLICATION_NAME=spring-boot-alloc-demo
+      - PYROSCOPE_SERVER_ADDRESS=http://pyroscope:4040
+      
+      # Ativa o modo de alocação de memória (define o limiar de amostragem)
+      - PYROSCOPE_PROFILER_ALLOC=512k
+      
+      # (Opcional) Desativa o profiling de CPU se o foco for estritamente alocação
+      - PYROSCOPE_PROFILER_CPU=false
+    depends_on:
+      - pyroscope
