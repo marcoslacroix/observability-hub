@@ -3,6 +3,27 @@ spring:
     name: pyroscope
 
 management:
+  tracing:
+    sampling:
+      probability: 1.0 # 1.0 = 100% das requisições rastreadas (ajuste em produção)
+  opentelemetry:
+    tracing:
+      export:
+        otlp:
+          # OTLP HTTP do OpenTelemetry Collector (encaminha para o Tempo)
+          endpoint: "http://localhost:4318/v1/traces"
+    logging:
+      export:
+        otlp:
+          # OTLP HTTP do OpenTelemetry Collector (encaminha para o Loki)
+          endpoint: "http://localhost:4318/v1/logs"
+  otlp:
+    metrics:
+      export:
+        # O starter de OpenTelemetry traz o registry OTLP de métricas, mas as métricas
+        # já são coletadas pelo Prometheus (/actuator/prometheus) e o Tempo não recebe métricas.
+        enabled: false
+
   endpoints:
     web:
       exposure:
@@ -10,3 +31,7 @@ management:
   metrics:
     tags:
       application: pyroscope-app # Nome da aplicação que aparecerá no Grafana
+
+logging:
+  pattern:
+    level: "%5p [${spring.application.name:},traceId=%X{traceId:-}%X{trace_id:-},spanId=%X{spanId:-}%X{span_id:-}]"

@@ -1,0 +1,210 @@
+{
+  "uid": "pyroscope-overview",
+  "title": "Pyroscope - Profiling",
+  "tags": ["pyroscope", "profiling"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "editable": true,
+  "refresh": "30s",
+  "time": { "from": "now-30m", "to": "now" },
+  "templating": {
+    "list": [
+      {
+        "name": "service",
+        "label": "Service",
+        "type": "query",
+        "datasource": { "type": "grafana-pyroscope-datasource", "uid": "pyroscope" },
+        "query": {
+          "type": "labelValue",
+          "profileTypeId": "process_cpu:cpu:nanoseconds:cpu:nanoseconds",
+          "labelName": "service_name",
+          "refId": "PyroscopeVariableQueryEditor-VariableQuery"
+        },
+        "definition": "label values service_name",
+        "refresh": 2,
+        "sort": 1,
+        "current": { "text": "spring-boot-alloc-demo", "value": "spring-boot-alloc-demo" }
+      },
+      {
+        "name": "profile_type",
+        "label": "Profile type (Explorer)",
+        "type": "query",
+        "datasource": { "type": "grafana-pyroscope-datasource", "uid": "pyroscope" },
+        "query": {
+          "type": "profileType",
+          "refId": "PyroscopeVariableQueryEditor-VariableQuery"
+        },
+        "definition": "profile types",
+        "refresh": 2,
+        "sort": 1,
+        "current": {
+          "text": "process_cpu - cpu",
+          "value": "process_cpu:cpu:nanoseconds:cpu:nanoseconds"
+        }
+      }
+    ]
+  },
+  "panels": [
+    {
+      "type": "row",
+      "title": "CPU",
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "id": 1,
+      "panels": []
+    },
+    {
+      "type": "timeseries",
+      "title": "CPU time",
+      "id": 2,
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 1 },
+      "datasource": { "type": "grafana-pyroscope-datasource", "uid": "pyroscope" },
+      "fieldConfig": {
+        "defaults": { "unit": "ns", "custom": { "fillOpacity": 15, "lineWidth": 1 } },
+        "overrides": []
+      },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "grafana-pyroscope-datasource", "uid": "pyroscope" },
+          "queryType": "metrics",
+          "profileTypeId": "process_cpu:cpu:nanoseconds:cpu:nanoseconds",
+          "labelSelector": "{service_name=\"$service\"}",
+          "groupBy": []
+        }
+      ]
+    },
+    {
+      "type": "flamegraph",
+      "title": "CPU flame graph",
+      "id": 3,
+      "gridPos": { "h": 14, "w": 24, "x": 0, "y": 9 },
+      "datasource": { "type": "grafana-pyroscope-datasource", "uid": "pyroscope" },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "grafana-pyroscope-datasource", "uid": "pyroscope" },
+          "queryType": "profile",
+          "profileTypeId": "process_cpu:cpu:nanoseconds:cpu:nanoseconds",
+          "labelSelector": "{service_name=\"$service\"}",
+          "groupBy": []
+        }
+      ]
+    },
+    {
+      "type": "row",
+      "title": "Memory allocation",
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 23 },
+      "id": 4,
+      "panels": []
+    },
+    {
+      "type": "timeseries",
+      "title": "Allocated bytes (TLAB)",
+      "id": 5,
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 24 },
+      "datasource": { "type": "grafana-pyroscope-datasource", "uid": "pyroscope" },
+      "fieldConfig": {
+        "defaults": { "unit": "bytes", "custom": { "fillOpacity": 15, "lineWidth": 1 } },
+        "overrides": []
+      },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "grafana-pyroscope-datasource", "uid": "pyroscope" },
+          "queryType": "metrics",
+          "profileTypeId": "memory:alloc_in_new_tlab_bytes:bytes:space:bytes",
+          "labelSelector": "{service_name=\"$service\"}",
+          "groupBy": []
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Allocated objects (TLAB)",
+      "id": 6,
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 24 },
+      "datasource": { "type": "grafana-pyroscope-datasource", "uid": "pyroscope" },
+      "fieldConfig": {
+        "defaults": { "unit": "short", "custom": { "fillOpacity": 15, "lineWidth": 1 } },
+        "overrides": []
+      },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "grafana-pyroscope-datasource", "uid": "pyroscope" },
+          "queryType": "metrics",
+          "profileTypeId": "memory:alloc_in_new_tlab_objects:count:space:bytes",
+          "labelSelector": "{service_name=\"$service\"}",
+          "groupBy": []
+        }
+      ]
+    },
+    {
+      "type": "flamegraph",
+      "title": "Allocation flame graph (bytes)",
+      "id": 7,
+      "gridPos": { "h": 14, "w": 24, "x": 0, "y": 32 },
+      "datasource": { "type": "grafana-pyroscope-datasource", "uid": "pyroscope" },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "grafana-pyroscope-datasource", "uid": "pyroscope" },
+          "queryType": "profile",
+          "profileTypeId": "memory:alloc_in_new_tlab_bytes:bytes:space:bytes",
+          "labelSelector": "{service_name=\"$service\"}",
+          "groupBy": []
+        }
+      ]
+    },
+    {
+      "type": "row",
+      "title": "Explorer (any profile type)",
+      "collapsed": true,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 46 },
+      "id": 8,
+      "panels": [
+        {
+          "type": "timeseries",
+          "title": "$profile_type",
+          "id": 9,
+          "gridPos": { "h": 8, "w": 24, "x": 0, "y": 47 },
+          "datasource": { "type": "grafana-pyroscope-datasource", "uid": "pyroscope" },
+          "fieldConfig": { "defaults": { "custom": { "fillOpacity": 15, "lineWidth": 1 } }, "overrides": [] },
+          "targets": [
+            {
+              "refId": "A",
+              "datasource": { "type": "grafana-pyroscope-datasource", "uid": "pyroscope" },
+              "queryType": "metrics",
+              "profileTypeId": "$profile_type",
+              "labelSelector": "{service_name=\"$service\"}",
+              "groupBy": []
+            }
+          ]
+        },
+        {
+          "type": "flamegraph",
+          "title": "$profile_type - flame graph",
+          "id": 10,
+          "gridPos": { "h": 14, "w": 24, "x": 0, "y": 55 },
+          "datasource": { "type": "grafana-pyroscope-datasource", "uid": "pyroscope" },
+          "targets": [
+            {
+              "refId": "A",
+              "datasource": { "type": "grafana-pyroscope-datasource", "uid": "pyroscope" },
+              "queryType": "profile",
+              "profileTypeId": "$profile_type",
+              "labelSelector": "{service_name=\"$service\"}",
+              "groupBy": []
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

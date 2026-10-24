@@ -1,14 +1,43 @@
 version: '3.8'
 
 services:
-  # Servidor Pyroscope para coletar e exibir os dados
+
+  # 1. O Coletor OpenTelemetry (Recebe os traces e logs da aplicação)
+  otel-collector:
+    image: otel/opentelemetry-collector:latest
+    container_name: otel-collector
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    volumes:
+      - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
+    ports:
+      - "4317:4317" # Porta gRPC do OTLP
+      - "4318:4318" # Porta HTTP do OTLP
+    depends_on:
+      - tempo
+      - loki
+
+  loki:
+    image: grafana/loki:latest
+    container_name: loki
+    ports:
+      - "3100:3100"
+    command:
+      - "-config.file=/etc/loki/loki.yaml"
+    volumes:
+      - ./loki.yaml:/etc/loki/loki.yaml
+
   prometheus:
     image: prom/prometheus:latest
     container_name: prometheus
     ports:
       - "9090:9090"
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--web.enable-remote-write-receiver"
+      - "--enable-feature=exemplar-storage"
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
+
   grafana:
     image: grafana/grafana:latest
     container_name: grafana
@@ -17,8 +46,24 @@ services:
     environment:
       - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning
     depends_on:
       - prometheus
+      - pyroscope
+      - tempo
+      - loki
+
+  tempo:
+    image: grafana/tempo:latest
+    container_name: tempo
+    command:
+      - "-config.file=/etc/tempo.yaml"
+    volumes:
+      - ./tempo.yaml:/etc/tempo.yaml
+    ports:
+      - "3200:3200" # Apenas a API do Tempo exposta para o Grafana
+
   pyroscope:
     image: grafana/pyroscope:latest
     container_name: pyroscope
@@ -26,25 +71,24 @@ services:
       - "4040:4040"
     command:
       - "server"
+      - "-metastore.min-ready-duration=0"
 
-  # Sua aplicação Spring Boot
   spring-app:
     build: .
     container_name: spring-spring-app
     ports:
       - "8080:8080"
     environment:
-      # Injeta o agente Java nativamente na inicialização da JVM
-      - JAVA_TOOL_OPTIONS=-javaagent:/app/pyroscope.jar
-      
-      # Configurações obrigatórias do Pyroscope
       - PYROSCOPE_APPLICATION_NAME=spring-boot-alloc-demo
       - PYROSCOPE_SERVER_ADDRESS=http://pyroscope:4040
-      
-      # Ativa o modo de alocação de memória (define o limiar de amostragem)
       - PYROSCOPE_PROFILER_ALLOC=512k
-      
-      # (Opcional) Desativa o profiling de CPU se o foco for estritamente alocação
       - PYROSCOPE_PROFILER_CPU=false
+      - OTEL_SERVICE_NAME=pyroscope-app
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+      - OTEL_EXPORTER_OTLP_PROTOCOL=grpc
+      - OTEL_LOGS_EXPORTER=otlp
     depends_on:
       - pyroscope
+      - tempo
+      - loki
+      - otel-collector

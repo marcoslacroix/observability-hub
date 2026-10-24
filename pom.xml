@@ -41,6 +41,19 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
+        
+        <!-- Starter Web (ou WebFlux) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
+        <!-- OpenTelemetry (tracing via Micrometer + exportador OTLP para o Grafana Tempo).
+             No Spring Boot 4 a auto-configuração fica no starter; só as libs não ativam o tracing. -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-opentelemetry</artifactId>
+        </dependency>
 
         <!-- Micrometer Prometheus Registry -->
         <dependency>
