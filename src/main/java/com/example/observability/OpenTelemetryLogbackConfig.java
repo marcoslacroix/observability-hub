@@ -1,4 +1,4 @@
-package com.example.pyroscope.pyroscope;
+package com.example.observability;
 
 import java.time.Instant;
 import java.util.Map;

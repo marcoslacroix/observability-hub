@@ -8,11 +8,11 @@
 		<version>4.1.1</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
-	<groupId>com.example.pyroscope</groupId>
-	<artifactId>pyroscope</artifactId>
+	<groupId>com.example.observability</groupId>
+	<artifactId>observability-hub</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name/>
-	<description/>
+	<name>observability-hub</name>
+	<description>Observability Hub - Spring Boot, OpenTelemetry, Tempo, Loki, Prometheus, Pyroscope &amp; Jira</description>
 	<url/>
 	<licenses>
 		<license/>

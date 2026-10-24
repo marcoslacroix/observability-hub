@@ -10,7 +10,7 @@ ADD --checksum=sha256:ad738199a90734f7b8392bae1ab892027d411acb953ef1f00cd6e8e7c6
 COPY opentelemetry-javaagent.jar /app/opentelemetry-javaagent.jar
 
 # 3. Copia o JAR da aplicação gerado pelo build
-COPY target/pyroscope-0.0.1-SNAPSHOT.jar /app/app.jar
+COPY target/observability-hub-0.0.1-SNAPSHOT.jar /app/app.jar
 
 # 4. Executa a aplicação ativando ambos os agentes
 ENTRYPOINT ["java", "-javaagent:/app/opentelemetry-javaagent.jar", "-javaagent:/app/pyroscope.jar", "-jar", "/app/app.jar"]

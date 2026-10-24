@@ -14,6 +14,20 @@ datasources:
     access: proxy
     url: http://pyroscope:4040
 
+  - name: Jira
+    uid: jira
+    type: yesoreyeram-infinity-datasource
+    access: proxy
+    basicAuth: true
+    basicAuthUser: ${JIRA_USER}
+    editable: true
+    jsonData:
+      auth_method: basicAuth
+      allowedHosts:
+        - ${JIRA_URL}
+    secureJsonData:
+      basicAuthPassword: ${JIRA_API_TOKEN}
+
   - name: Loki
     uid: loki
     type: loki

@@ -24,7 +24,7 @@
         "definition": "label values service_name",
         "refresh": 2,
         "sort": 1,
-        "current": { "text": "spring-boot-alloc-demo", "value": "spring-boot-alloc-demo" }
+        "current": { "text": "observability-hub", "value": "observability-hub" }
       },
       {
         "name": "profile_type",

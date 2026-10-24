@@ -1,4 +1,4 @@
-package com.example.pyroscope.pyroscope;
+package com.example.observability;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 
-import lombok.extern.log4j.Log4j;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,7 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
 /**
- * Endpoints de teste que geram alocação de memória para o profiling do Pyroscope.
+ * Endpoints de teste que geram alocação de memória, logs e traces para observabilidade.
  */
 @RestController
 @RequestMapping("/alloc")
@@ -51,7 +50,7 @@ public class AllocationController {
 	@GetMapping("/objects")
 	public Map<String, Object> allocateObjects(@RequestParam(defaultValue = "200000") int items) {
 		log.info("Iniciando criacao de {} objetos no HashMap", items);
-        validate(items, MAX_ITEMS, "items");
+		validate(items, MAX_ITEMS, "items");
 		Map<String, String> map = new HashMap<>();
 		for (int i = 0; i < items; i++) {
 			map.put("key-" + i, "value-" + i + "-" + System.nanoTime());

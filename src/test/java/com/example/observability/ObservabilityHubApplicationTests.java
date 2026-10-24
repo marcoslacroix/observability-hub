@@ -1,10 +1,10 @@
-package com.example.pyroscope.pyroscope;
+package com.example.observability;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class PyroscopeApplicationTests {
+class ObservabilityHubApplicationTests {
 
 	@Test
 	void contextLoads() {

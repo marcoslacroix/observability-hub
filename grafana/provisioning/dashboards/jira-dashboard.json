@@ -1,0 +1,1191 @@
+{
+  "uid": "jira-overview-dashboard",
+  "title": "Jira - Issues, Sprints, Velocidade & Lead Time",
+  "tags": ["jira", "agile", "sprint", "issues", "lead-time"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 10,
+  "editable": true,
+  "refresh": "1m",
+  "time": {
+    "from": "now-30d",
+    "to": "now"
+  },
+  "templating": {
+    "list": [
+      {
+        "name": "jira_url",
+        "label": "URL do Jira",
+        "type": "textbox",
+        "query": "${JIRA_URL}",
+        "current": {
+          "selected": true,
+          "text": "${JIRA_URL}",
+          "value": "${JIRA_URL}"
+        },
+        "hide": 0
+      },
+      {
+        "name": "consulta_jql",
+        "label": "Filtro / Visão do Jira",
+        "type": "custom",
+        "query": "Empresa Toda - Ano Atual (Desde 01/Jan) : created >= startOfYear(),Empresa Toda - Últimos 365 dias : created >= -365d,Minhas Issues no Ano Atual (Marcos) : created >= startOfYear() AND assignee = currentUser(),Minhas Issues nos Últimos 365 dias (Marcos) : created >= -365d AND assignee = currentUser(),Minhas Concluídas no Ano Atual (Marcos) : created >= startOfYear() AND assignee = currentUser() AND statusCategory = 'Done',Minha Sprint Atual (Marcos) : sprint in openSprints() AND assignee = currentUser(),Empresa Toda - Sprint Atual : sprint in openSprints(),Empresa Toda - Últimos 30 dias : created >= -30d",
+        "current": {
+          "selected": true,
+          "text": "Empresa Toda - Ano Atual (Desde 01/Jan)",
+          "value": "created >= startOfYear()"
+        },
+        "options": [
+          {
+            "selected": true,
+            "text": "Empresa Toda - Ano Atual (Desde 01/Jan)",
+            "value": "created >= startOfYear()"
+          },
+          {
+            "selected": false,
+            "text": "Empresa Toda - Últimos 365 dias",
+            "value": "created >= -365d"
+          },
+          {
+            "selected": false,
+            "text": "Minhas Issues no Ano Atual (Marcos)",
+            "value": "created >= startOfYear() AND assignee = currentUser()"
+          },
+          {
+            "selected": false,
+            "text": "Minhas Issues nos Últimos 365 dias (Marcos)",
+            "value": "created >= -365d AND assignee = currentUser()"
+          },
+          {
+            "selected": false,
+            "text": "Minhas Concluídas no Ano Atual (Marcos)",
+            "value": "created >= startOfYear() AND assignee = currentUser() AND statusCategory = 'Done'"
+          },
+          {
+            "selected": false,
+            "text": "Minha Sprint Atual (Marcos)",
+            "value": "sprint in openSprints() AND assignee = currentUser()"
+          },
+          {
+            "selected": false,
+            "text": "Empresa Toda - Sprint Atual",
+            "value": "sprint in openSprints()"
+          },
+          {
+            "selected": false,
+            "text": "Empresa Toda - Últimos 30 dias",
+            "value": "created >= -30d"
+          }
+        ],
+        "hide": 0
+      }
+    ]
+  },
+  "panels": [
+    {
+      "type": "row",
+      "title": "Contagem Global no Jira (Sem limite de 100 itens - Conta 100% das Issues)",
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "id": 1,
+      "panels": []
+    },
+    {
+      "type": "stat",
+      "title": "Total de Issues (Filtro Atual)",
+      "id": 2,
+      "gridPos": { "h": 4, "w": 4, "x": 0, "y": 1 },
+      "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "jira" },
+      "fieldConfig": {
+        "defaults": {
+          "noValue": "0",
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{ "color": "blue", "value": null }]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "/^Total$/", "values": false },
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "jira" },
+          "type": "json",
+          "source": "url",
+          "format": "table",
+          "parser": "simple",
+          "root_selector": "",
+          "columns": [{ "selector": "count", "text": "Total", "type": "number" }],
+          "url": "${jira_url}/rest/api/3/search/approximate-count",
+          "url_options": {
+            "method": "POST",
+            "body_type": "raw",
+            "body_content_type": "application/json",
+            "data": "{\"jql\": \"${consulta_jql:raw}\"}"
+          }
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Pendentes / To Do (Filtro Atual)",
+      "id": 3,
+      "gridPos": { "h": 4, "w": 4, "x": 4, "y": 1 },
+      "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "jira" },
+      "fieldConfig": {
+        "defaults": {
+          "noValue": "0",
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{ "color": "purple", "value": null }]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "/^Total$/", "values": false },
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "jira" },
+          "type": "json",
+          "source": "url",
+          "format": "table",
+          "parser": "simple",
+          "root_selector": "",
+          "columns": [{ "selector": "count", "text": "Total", "type": "number" }],
+          "url": "${jira_url}/rest/api/3/search/approximate-count",
+          "url_options": {
+            "method": "POST",
+            "body_type": "raw",
+            "body_content_type": "application/json",
+            "data": "{\"jql\": \"${consulta_jql:raw} AND statusCategory = 'To Do'\"}"
+          }
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Em Andamento (Filtro Atual)",
+      "id": 4,
+      "gridPos": { "h": 4, "w": 4, "x": 8, "y": 1 },
+      "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "jira" },
+      "fieldConfig": {
+        "defaults": {
+          "noValue": "0",
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{ "color": "orange", "value": null }]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "/^Total$/", "values": false },
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "jira" },
+          "type": "json",
+          "source": "url",
+          "format": "table",
+          "parser": "simple",
+          "root_selector": "",
+          "columns": [{ "selector": "count", "text": "Total", "type": "number" }],
+          "url": "${jira_url}/rest/api/3/search/approximate-count",
+          "url_options": {
+            "method": "POST",
+            "body_type": "raw",
+            "body_content_type": "application/json",
+            "data": "{\"jql\": \"${consulta_jql:raw} AND statusCategory = 'In Progress'\"}"
+          }
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Concluídas / Done (Filtro Atual)",
+      "id": 5,
+      "gridPos": { "h": 4, "w": 4, "x": 12, "y": 1 },
+      "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "jira" },
+      "fieldConfig": {
+        "defaults": {
+          "noValue": "0",
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{ "color": "green", "value": null }]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "/^Total$/", "values": false },
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "jira" },
+          "type": "json",
+          "source": "url",
+          "format": "table",
+          "parser": "simple",
+          "root_selector": "",
+          "columns": [{ "selector": "count", "text": "Total", "type": "number" }],
+          "url": "${jira_url}/rest/api/3/search/approximate-count",
+          "url_options": {
+            "method": "POST",
+            "body_type": "raw",
+            "body_content_type": "application/json",
+            "data": "{\"jql\": \"${consulta_jql:raw} AND statusCategory = 'Done'\"}"
+          }
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Minhas Concluídas em 365d (Marcos)",
+      "id": 6,
+      "gridPos": { "h": 4, "w": 4, "x": 16, "y": 1 },
+      "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "jira" },
+      "fieldConfig": {
+        "defaults": {
+          "noValue": "0",
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{ "color": "dark-green", "value": null }]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "/^Total$/", "values": false },
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "jira" },
+          "type": "json",
+          "source": "url",
+          "format": "table",
+          "parser": "simple",
+          "root_selector": "",
+          "columns": [{ "selector": "count", "text": "Total", "type": "number" }],
+          "url": "${jira_url}/rest/api/3/search/approximate-count",
+          "url_options": {
+            "method": "POST",
+            "body_type": "raw",
+            "body_content_type": "application/json",
+            "data": "{\"jql\": \"created >= -365d AND assignee = currentUser() AND statusCategory = 'Done'\"}"
+          }
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Minhas Issues Totais em 365d (Marcos)",
+      "id": 7,
+      "gridPos": { "h": 4, "w": 4, "x": 20, "y": 1 },
+      "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "jira" },
+      "fieldConfig": {
+        "defaults": {
+          "noValue": "0",
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{ "color": "dark-blue", "value": null }]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "/^Total$/", "values": false },
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "jira" },
+          "type": "json",
+          "source": "url",
+          "format": "table",
+          "parser": "simple",
+          "root_selector": "",
+          "columns": [{ "selector": "count", "text": "Total", "type": "number" }],
+          "url": "${jira_url}/rest/api/3/search/approximate-count",
+          "url_options": {
+            "method": "POST",
+            "body_type": "raw",
+            "body_content_type": "application/json",
+            "data": "{\"jql\": \"created >= -365d AND assignee = currentUser()\"}"
+          }
+        }
+      ]
+    },
+    {
+      "type": "row",
+      "title": "Distribuição por Status, Prioridade, Tipo e Responsável (100% das Issues do Período - Sem limite de 100 itens)",
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 5 },
+      "id": 8,
+      "panels": []
+    },
+    {
+      "type": "piechart",
+      "title": "Quantidade de Issues por Status (Total Real)",
+      "id": 9,
+      "gridPos": { "h": 9, "w": 6, "x": 0, "y": 6 },
+      "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "jira" },
+      "options": {
+        "pieType": "donut",
+        "displayLabels": ["name", "value", "percent"],
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "values": ["value", "percent"]
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "jira" },
+          "type": "json",
+          "source": "url",
+          "format": "table",
+          "parser": "simple",
+          "root_selector": "",
+          "columns": [{ "selector": "count", "text": "Concluído", "type": "number" }],
+          "url": "${jira_url}/rest/api/3/search/approximate-count",
+          "url_options": {
+            "method": "POST",
+            "body_type": "raw",
+            "body_content_type": "application/json",
+            "data": "{\"jql\": \"${consulta_jql:raw} AND statusCategory = 'Done'\"}"
+          }
+        },
+        {
+          "refId": "B",
+          "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "jira" },
+          "type": "json",
+          "source": "url",
+          "format": "table",
+          "parser": "simple",
+          "root_selector": "",
+          "columns": [{ "selector": "count", "text": "Tarefas pendentes", "type": "number" }],
+          "url": "${jira_url}/rest/api/3/search/approximate-count",
+          "url_options": {
+            "method": "POST",
+            "body_type": "raw",
+            "body_content_type": "application/json",
+            "data": "{\"jql\": \"${consulta_jql:raw} AND statusCategory = 'To Do'\"}"
+          }
+        },
+        {
+          "refId": "C",
+          "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "jira" },
+          "type": "json",
+          "source": "url",
+          "format": "table",
+          "parser": "simple",
+          "root_selector": "",
+          "columns": [{ "selector": "count", "text": "Em andamento", "type": "number" }],
+          "url": "${jira_url}/rest/api/3/search/approximate-count",
+          "url_options": {
+            "method": "POST",
+            "body_type": "raw",
+            "body_content_type": "application/json",
+            "data": "{\"jql\": \"${consulta_jql:raw} AND status = 'Em andamento'\"}"
+          }
+        },
+        {
+          "refId": "D",
+          "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "jira" },
+          "type": "json",
+          "source": "url",
+          "format": "table",
+          "parser": "simple",
+          "root_selector": "",
+          "columns": [{ "selector": "count", "text": "Analisado", "type": "number" }],
+          "url": "${jira_url}/rest/api/3/search/approximate-count",
+          "url_options": {
+            "method": "POST",
+            "body_type": "raw",
+            "body_content_type": "application/json",
+            "data": "{\"jql\": \"${consulta_jql:raw} AND status = 'Analisado'\"}"
+          }
+        },
+        {
+          "refId": "E",
+          "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "jira" },
+          "type": "json",
+          "source": "url",
+          "format": "table",
+          "parser": "simple",
+          "root_selector": "",
+          "columns": [{ "selector": "count", "text": "DESENVOLVIDO", "type": "number" }],
+          "url": "${jira_url}/rest/api/3/search/approximate-count",
+          "url_options": {
+            "method": "POST",
+            "body_type": "raw",
+            "body_content_type": "application/json",
+            "data": "{\"jql\": \"${consulta_jql:raw} AND status = 'DESENVOLVIDO'\"}"
+          }
+        },
+        {
+          "refId": "F",
+          "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "jira" },
+          "type": "json",
+          "source": "url",
+          "format": "table",
+          "parser": "simple",
+          "root_selector": "",
+          "columns": [{ "selector": "count", "text": "TESTADO", "type": "number" }],
+          "url": "${jira_url}/rest/api/3/search/approximate-count",
+          "url_options": {
+            "method": "POST",
+            "body_type": "raw",
+            "body_content_type": "application/json",
+            "data": "{\"jql\": \"${consulta_jql:raw} AND status = 'TESTADO'\"}"
+          }
+        }
+      ]
+    },
+    {
+      "type": "bargauge",
+      "title": "Issues por Prioridade (Total Real)",
+      "id": 10,
+      "gridPos": { "h": 9, "w": 6, "x": 6, "y": 6 },
+      "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "jira" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" }
+        },
+        "overrides": []
+      },
+      "options": {
+        "orientation": "horizontal",
+        "displayMode": "gradient",
+        "showUnfilled": true,
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "jira" },
+          "type": "json",
+          "source": "url",
+          "format": "table",
+          "parser": "simple",
+          "root_selector": "",
+          "columns": [{ "selector": "count", "text": "Highest", "type": "number" }],
+          "url": "${jira_url}/rest/api/3/search/approximate-count",
+          "url_options": {
+            "method": "POST",
+            "body_type": "raw",
+            "body_content_type": "application/json",
+            "data": "{\"jql\": \"${consulta_jql:raw} AND priority = 'Highest'\"}"
+          }
+        },
+        {
+          "refId": "B",
+          "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "jira" },
+          "type": "json",
+          "source": "url",
+          "format": "table",
+          "parser": "simple",
+          "root_selector": "",
+          "columns": [{ "selector": "count", "text": "High", "type": "number" }],
+          "url": "${jira_url}/rest/api/3/search/approximate-count",
+          "url_options": {
+            "method": "POST",
+            "body_type": "raw",
+            "body_content_type": "application/json",
+            "data": "{\"jql\": \"${consulta_jql:raw} AND priority = 'High'\"}"
+          }
+        },
+        {
+          "refId": "C",
+          "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "jira" },
+          "type": "json",
+          "source": "url",
+          "format": "table",
+          "parser": "simple",
+          "root_selector": "",
+          "columns": [{ "selector": "count", "text": "Medium", "type": "number" }],
+          "url": "${jira_url}/rest/api/3/search/approximate-count",
+          "url_options": {
+            "method": "POST",
+            "body_type": "raw",
+            "body_content_type": "application/json",
+            "data": "{\"jql\": \"${consulta_jql:raw} AND priority = 'Medium'\"}"
+          }
+        },
+        {
+          "refId": "D",
+          "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "jira" },
+          "type": "json",
+          "source": "url",
+          "format": "table",
+          "parser": "simple",
+          "root_selector": "",
+          "columns": [{ "selector": "count", "text": "Low", "type": "number" }],
+          "url": "${jira_url}/rest/api/3/search/approximate-count",
+          "url_options": {
+            "method": "POST",
+            "body_type": "raw",
+            "body_content_type": "application/json",
+            "data": "{\"jql\": \"${consulta_jql:raw} AND priority = 'Low'\"}"
+          }
+        },
+        {
+          "refId": "E",
+          "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "jira" },
+          "type": "json",
+          "source": "url",
+          "format": "table",
+          "parser": "simple",
+          "root_selector": "",
+          "columns": [{ "selector": "count", "text": "Lowest", "type": "number" }],
+          "url": "${jira_url}/rest/api/3/search/approximate-count",
+          "url_options": {
+            "method": "POST",
+            "body_type": "raw",
+            "body_content_type": "application/json",
+            "data": "{\"jql\": \"${consulta_jql:raw} AND priority = 'Lowest'\"}"
+          }
+        }
+      ]
+    },
+    {
+      "type": "piechart",
+      "title": "Issues por Tipo (Total Real)",
+      "id": 11,
+      "gridPos": { "h": 9, "w": 6, "x": 12, "y": 6 },
+      "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "jira" },
+      "options": {
+        "pieType": "pie",
+        "displayLabels": ["name", "value"],
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "values": ["value", "percent"]
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "jira" },
+          "type": "json",
+          "source": "url",
+          "format": "table",
+          "parser": "simple",
+          "root_selector": "",
+          "columns": [{ "selector": "count", "text": "Tarefa", "type": "number" }],
+          "url": "${jira_url}/rest/api/3/search/approximate-count",
+          "url_options": {
+            "method": "POST",
+            "body_type": "raw",
+            "body_content_type": "application/json",
+            "data": "{\"jql\": \"${consulta_jql:raw} AND issuetype = 'Tarefa'\"}"
+          }
+        },
+        {
+          "refId": "B",
+          "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "jira" },
+          "type": "json",
+          "source": "url",
+          "format": "table",
+          "parser": "simple",
+          "root_selector": "",
+          "columns": [{ "selector": "count", "text": "Solicitação", "type": "number" }],
+          "url": "${jira_url}/rest/api/3/search/approximate-count",
+          "url_options": {
+            "method": "POST",
+            "body_type": "raw",
+            "body_content_type": "application/json",
+            "data": "{\"jql\": \"${consulta_jql:raw} AND issuetype = 'Solicitação'\"}"
+          }
+        },
+        {
+          "refId": "C",
+          "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "jira" },
+          "type": "json",
+          "source": "url",
+          "format": "table",
+          "parser": "simple",
+          "root_selector": "",
+          "columns": [{ "selector": "count", "text": "Erro / Bug", "type": "number" }],
+          "url": "${jira_url}/rest/api/3/search/approximate-count",
+          "url_options": {
+            "method": "POST",
+            "body_type": "raw",
+            "body_content_type": "application/json",
+            "data": "{\"jql\": \"${consulta_jql:raw} AND issuetype in ('Erro', 'Bug')\"}"
+          }
+        },
+        {
+          "refId": "D",
+          "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "jira" },
+          "type": "json",
+          "source": "url",
+          "format": "table",
+          "parser": "simple",
+          "root_selector": "",
+          "columns": [{ "selector": "count", "text": "História", "type": "number" }],
+          "url": "${jira_url}/rest/api/3/search/approximate-count",
+          "url_options": {
+            "method": "POST",
+            "body_type": "raw",
+            "body_content_type": "application/json",
+            "data": "{\"jql\": \"${consulta_jql:raw} AND issuetype = 'História'\"}"
+          }
+        },
+        {
+          "refId": "E",
+          "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "jira" },
+          "type": "json",
+          "source": "url",
+          "format": "table",
+          "parser": "simple",
+          "root_selector": "",
+          "columns": [{ "selector": "count", "text": "Débito Técnico", "type": "number" }],
+          "url": "${jira_url}/rest/api/3/search/approximate-count",
+          "url_options": {
+            "method": "POST",
+            "body_type": "raw",
+            "body_content_type": "application/json",
+            "data": "{\"jql\": \"${consulta_jql:raw} AND issuetype = 'Débito Técnico'\"}"
+          }
+        },
+        {
+          "refId": "F",
+          "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "jira" },
+          "type": "json",
+          "source": "url",
+          "format": "table",
+          "parser": "simple",
+          "root_selector": "",
+          "columns": [{ "selector": "count", "text": "Subtarefa", "type": "number" }],
+          "url": "${jira_url}/rest/api/3/search/approximate-count",
+          "url_options": {
+            "method": "POST",
+            "body_type": "raw",
+            "body_content_type": "application/json",
+            "data": "{\"jql\": \"${consulta_jql:raw} AND issuetype in ('Subtarefa', 'Sub-task')\"}"
+          }
+        },
+        {
+          "refId": "G",
+          "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "jira" },
+          "type": "json",
+          "source": "url",
+          "format": "table",
+          "parser": "simple",
+          "root_selector": "",
+          "columns": [{ "selector": "count", "text": "Atendimento", "type": "number" }],
+          "url": "${jira_url}/rest/api/3/search/approximate-count",
+          "url_options": {
+            "method": "POST",
+            "body_type": "raw",
+            "body_content_type": "application/json",
+            "data": "{\"jql\": \"${consulta_jql:raw} AND issuetype = 'Atendimento'\"}"
+          }
+        },
+        {
+          "refId": "H",
+          "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "jira" },
+          "type": "json",
+          "source": "url",
+          "format": "table",
+          "parser": "simple",
+          "root_selector": "",
+          "columns": [{ "selector": "count", "text": "Hotfix / Melhoria", "type": "number" }],
+          "url": "${jira_url}/rest/api/3/search/approximate-count",
+          "url_options": {
+            "method": "POST",
+            "body_type": "raw",
+            "body_content_type": "application/json",
+            "data": "{\"jql\": \"${consulta_jql:raw} AND issuetype in ('Hotfix', 'Melhoria')\"}"
+          }
+        }
+      ]
+    },
+    {
+      "type": "bargauge",
+      "title": "Issues por Responsável (Total Real no Período)",
+      "id": 12,
+      "gridPos": { "h": 9, "w": 6, "x": 18, "y": 6 },
+      "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "jira" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "continuous-BlYlRd" }
+        },
+        "overrides": []
+      },
+      "options": {
+        "orientation": "horizontal",
+        "displayMode": "lcd",
+        "showUnfilled": true,
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "jira" },
+          "type": "json",
+          "source": "url",
+          "format": "table",
+          "parser": "simple",
+          "root_selector": "",
+          "columns": [{ "selector": "count", "text": "Marcos Lacroix", "type": "number" }],
+          "url": "${jira_url}/rest/api/3/search/approximate-count",
+          "url_options": {
+            "method": "POST",
+            "body_type": "raw",
+            "body_content_type": "application/json",
+            "data": "{\"jql\": \"${consulta_jql:raw} AND assignee = 'Dev 1'\"}"
+          }
+        },
+        {
+          "refId": "B",
+          "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "jira" },
+          "type": "json",
+          "source": "url",
+          "format": "table",
+          "parser": "simple",
+          "root_selector": "",
+          "columns": [{ "selector": "count", "text": "Marcelo Lacroix", "type": "number" }],
+          "url": "${jira_url}/rest/api/3/search/approximate-count",
+          "url_options": {
+            "method": "POST",
+            "body_type": "raw",
+            "body_content_type": "application/json",
+            "data": "{\"jql\": \"${consulta_jql:raw} AND assignee = 'Dev 2'\"}"
+          }
+        },
+        {
+          "refId": "C",
+          "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "jira" },
+          "type": "json",
+          "source": "url",
+          "format": "table",
+          "parser": "simple",
+          "root_selector": "",
+          "columns": [{ "selector": "count", "text": "Dev 3", "type": "number" }],
+          "url": "${jira_url}/rest/api/3/search/approximate-count",
+          "url_options": {
+            "method": "POST",
+            "body_type": "raw",
+            "body_content_type": "application/json",
+            "data": "{\"jql\": \"${consulta_jql:raw} AND assignee = 'Dev 3'\"}"
+          }
+        },
+        {
+          "refId": "D",
+          "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "jira" },
+          "type": "json",
+          "source": "url",
+          "format": "table",
+          "parser": "simple",
+          "root_selector": "",
+          "columns": [{ "selector": "count", "text": "Dev 4", "type": "number" }],
+          "url": "${jira_url}/rest/api/3/search/approximate-count",
+          "url_options": {
+            "method": "POST",
+            "body_type": "raw",
+            "body_content_type": "application/json",
+            "data": "{\"jql\": \"${consulta_jql:raw} AND assignee = 'Dev 4'\"}"
+          }
+        },
+        {
+          "refId": "E",
+          "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "jira" },
+          "type": "json",
+          "source": "url",
+          "format": "table",
+          "parser": "simple",
+          "root_selector": "",
+          "columns": [{ "selector": "count", "text": "Dev 5", "type": "number" }],
+          "url": "${jira_url}/rest/api/3/search/approximate-count",
+          "url_options": {
+            "method": "POST",
+            "body_type": "raw",
+            "body_content_type": "application/json",
+            "data": "{\"jql\": \"${consulta_jql:raw} AND assignee = 'Dev 5'\"}"
+          }
+        },
+        {
+          "refId": "F",
+          "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "jira" },
+          "type": "json",
+          "source": "url",
+          "format": "table",
+          "parser": "simple",
+          "root_selector": "",
+          "columns": [{ "selector": "count", "text": "Dev 6", "type": "number" }],
+          "url": "${jira_url}/rest/api/3/search/approximate-count",
+          "url_options": {
+            "method": "POST",
+            "body_type": "raw",
+            "body_content_type": "application/json",
+            "data": "{\"jql\": \"${consulta_jql:raw} AND assignee = 'Dev 6'\"}"
+          }
+        },
+        {
+          "refId": "G",
+          "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "jira" },
+          "type": "json",
+          "source": "url",
+          "format": "table",
+          "parser": "simple",
+          "root_selector": "",
+          "columns": [{ "selector": "count", "text": "Dev 7", "type": "number" }],
+          "url": "${jira_url}/rest/api/3/search/approximate-count",
+          "url_options": {
+            "method": "POST",
+            "body_type": "raw",
+            "body_content_type": "application/json",
+            "data": "{\"jql\": \"${consulta_jql:raw} AND assignee = 'Dev 7'\"}"
+          }
+        },
+        {
+          "refId": "H",
+          "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "jira" },
+          "type": "json",
+          "source": "url",
+          "format": "table",
+          "parser": "simple",
+          "root_selector": "",
+          "columns": [{ "selector": "count", "text": "Dev 8", "type": "number" }],
+          "url": "${jira_url}/rest/api/3/search/approximate-count",
+          "url_options": {
+            "method": "POST",
+            "body_type": "raw",
+            "body_content_type": "application/json",
+            "data": "{\"jql\": \"${consulta_jql:raw} AND assignee = 'Dev 8'\"}"
+          }
+        },
+        {
+          "refId": "I",
+          "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "jira" },
+          "type": "json",
+          "source": "url",
+          "format": "table",
+          "parser": "simple",
+          "root_selector": "",
+          "columns": [{ "selector": "count", "text": "Dev 9", "type": "number" }],
+          "url": "${jira_url}/rest/api/3/search/approximate-count",
+          "url_options": {
+            "method": "POST",
+            "body_type": "raw",
+            "body_content_type": "application/json",
+            "data": "{\"jql\": \"${consulta_jql:raw} AND assignee = 'Dev 9'\"}"
+          }
+        },
+        {
+          "refId": "J",
+          "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "jira" },
+          "type": "json",
+          "source": "url",
+          "format": "table",
+          "parser": "simple",
+          "root_selector": "",
+          "columns": [{ "selector": "count", "text": "Dev 10", "type": "number" }],
+          "url": "${jira_url}/rest/api/3/search/approximate-count",
+          "url_options": {
+            "method": "POST",
+            "body_type": "raw",
+            "body_content_type": "application/json",
+            "data": "{\"jql\": \"${consulta_jql:raw} AND assignee = 'Dev 10'\"}"
+          }
+        },
+        {
+          "refId": "K",
+          "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "jira" },
+          "type": "json",
+          "source": "url",
+          "format": "table",
+          "parser": "simple",
+          "root_selector": "",
+          "columns": [{ "selector": "count", "text": "Dev 11", "type": "number" }],
+          "url": "${jira_url}/rest/api/3/search/approximate-count",
+          "url_options": {
+            "method": "POST",
+            "body_type": "raw",
+            "body_content_type": "application/json",
+            "data": "{\"jql\": \"${consulta_jql:raw} AND assignee = 'Dev 11'\"}"
+          }
+        },
+        {
+          "refId": "L",
+          "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "jira" },
+          "type": "json",
+          "source": "url",
+          "format": "table",
+          "parser": "simple",
+          "root_selector": "",
+          "columns": [{ "selector": "count", "text": "Sem Responsável", "type": "number" }],
+          "url": "${jira_url}/rest/api/3/search/approximate-count",
+          "url_options": {
+            "method": "POST",
+            "body_type": "raw",
+            "body_content_type": "application/json",
+            "data": "{\"jql\": \"${consulta_jql:raw} AND assignee is EMPTY\"}"
+          }
+        }
+      ]
+    },
+    {
+      "type": "row",
+      "title": "Métricas de Entrega, Velocidade e Projetos do Jira",
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 15 },
+      "id": 13,
+      "panels": []
+    },
+    {
+      "type": "bargauge",
+      "title": "Fluxo de Entrega por Categoria (Total Real no Período)",
+      "id": 14,
+      "gridPos": { "h": 7, "w": 10, "x": 0, "y": 16 },
+      "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "jira" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" }
+        },
+        "overrides": []
+      },
+      "options": {
+        "orientation": "horizontal",
+        "displayMode": "gradient",
+        "showUnfilled": true,
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "jira" },
+          "type": "json",
+          "source": "url",
+          "format": "table",
+          "parser": "simple",
+          "root_selector": "",
+          "columns": [{ "selector": "count", "text": "Itens concluídos (Done)", "type": "number" }],
+          "url": "${jira_url}/rest/api/3/search/approximate-count",
+          "url_options": {
+            "method": "POST",
+            "body_type": "raw",
+            "body_content_type": "application/json",
+            "data": "{\"jql\": \"${consulta_jql:raw} AND statusCategory = 'Done'\"}"
+          }
+        },
+        {
+          "refId": "B",
+          "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "jira" },
+          "type": "json",
+          "source": "url",
+          "format": "table",
+          "parser": "simple",
+          "root_selector": "",
+          "columns": [{ "selector": "count", "text": "Itens Pendentes (To Do)", "type": "number" }],
+          "url": "${jira_url}/rest/api/3/search/approximate-count",
+          "url_options": {
+            "method": "POST",
+            "body_type": "raw",
+            "body_content_type": "application/json",
+            "data": "{\"jql\": \"${consulta_jql:raw} AND statusCategory = 'To Do'\"}"
+          }
+        },
+        {
+          "refId": "C",
+          "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "jira" },
+          "type": "json",
+          "source": "url",
+          "format": "table",
+          "parser": "simple",
+          "root_selector": "",
+          "columns": [{ "selector": "count", "text": "Em andamento (In Progress)", "type": "number" }],
+          "url": "${jira_url}/rest/api/3/search/approximate-count",
+          "url_options": {
+            "method": "POST",
+            "body_type": "raw",
+            "body_content_type": "application/json",
+            "data": "{\"jql\": \"${consulta_jql:raw} AND statusCategory = 'In Progress'\"}"
+          }
+        }
+      ]
+    },
+    {
+      "type": "table",
+      "title": "Projetos Disponíveis no Jira (Clique na Chave para filtrar pelo Projeto)",
+      "id": 15,
+      "gridPos": { "h": 7, "w": 14, "x": 10, "y": 16 },
+      "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "jira" },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": { "type": "auto" },
+            "filterable": true
+          }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "Chave" },
+            "properties": [
+              { "id": "custom.width", "value": 160 },
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "title": "Ver Ano Atual do projeto ${__value.raw}",
+                    "url": "/d/jira-overview-dashboard?var-consulta_jql=project%20%3D%20'${__value.raw}'%20AND%20created%20%3E%3D%20startOfYear()",
+                    "targetBlank": false
+                  },
+                  {
+                    "title": "Ver Minhas Issues no projeto ${__value.raw}",
+                    "url": "/d/jira-overview-dashboard?var-consulta_jql=project%20%3D%20'${__value.raw}'%20AND%20assignee%20%3D%20currentUser()",
+                    "targetBlank": false
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "jira" },
+          "type": "json",
+          "source": "url",
+          "format": "table",
+          "parser": "uql",
+          "url": "${jira_url}/rest/api/3/project",
+          "url_options": { "method": "GET" },
+          "uql": "parse-json\n| project \"Chave\"=\"key\", \"Nome do Projeto\"=\"name\", \"Tipo\"=\"projectTypeKey\", \"Estilo\"=\"style\""
+        }
+      ]
+    },
+    {
+      "type": "row",
+      "title": "Tabela Detalhada de Issues Recentes (Últimas 100 atualizadas no Filtro)",
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 23 },
+      "id": 16,
+      "panels": []
+    },
+    {
+      "type": "table",
+      "title": "Lista Detalhada de Issues (Clique na Chave para abrir no Jira)",
+      "id": 17,
+      "gridPos": { "h": 11, "w": 24, "x": 0, "y": 24 },
+      "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "jira" },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": { "type": "auto" },
+            "inspect": false,
+            "filterable": true
+          }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "Chave" },
+            "properties": [
+              { "id": "custom.width", "value": 130 },
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "title": "Abrir ${__value.raw} no Jira",
+                    "url": "${jira_url}/browse/${__value.raw}",
+                    "targetBlank": true
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Tipo" },
+            "properties": [{ "id": "custom.width", "value": 120 }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Prioridade" },
+            "properties": [{ "id": "custom.width", "value": 120 }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Status" },
+            "properties": [{ "id": "custom.width", "value": 150 }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Responsavel" },
+            "properties": [{ "id": "custom.width", "value": 180 }]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": true,
+          "reducer": ["count"],
+          "countRows": true
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "jira" },
+          "type": "json",
+          "source": "url",
+          "format": "table",
+          "parser": "uql",
+          "url": "${jira_url}/rest/api/3/search/jql",
+          "url_options": {
+            "method": "GET",
+            "params": [
+              { "key": "jql", "value": "${consulta_jql:raw} ORDER BY updated DESC" },
+              { "key": "maxResults", "value": "100" },
+              { "key": "fields", "value": "summary,status,priority,issuetype,assignee,created,updated,resolutiondate" }
+            ]
+          },
+          "uql": "parse-json\n| scope \"issues\"\n| project \"Chave\"=\"key\", \"Resumo\"=\"fields.summary\", \"Tipo\"=\"fields.issuetype.name\", \"Prioridade\"=\"fields.priority.name\", \"Status\"=\"fields.status.name\", \"Responsavel\"=\"fields.assignee.displayName\", \"Criado em\"=\"fields.created\", \"Atualizado em\"=\"fields.updated\", \"Resolvido em\"=\"fields.resolutiondate\""
+        }
+      ]
+    }
+  ]
+}

@@ -1,85 +1,77 @@
-Spring Boot + Pyroscope Memory Allocation Profiler
+# Observability Hub — Spring Boot 4 + LGTM Stack + Pyroscope + Jira
 
-Este projeto é uma aplicação de demonstração em Spring Boot criada para testar e visualizar o profiling de alocação de memória utilizando o Grafana Pyroscope. O projeto inclui um controlador com endpoints propositadamente projetados para gerar pressão de heap e alocações de objetos, permitindo a análise de flamegraphs sem exigir nenhuma alteração invasiva no código da aplicação (utilizando o agente Java via variável de ambiente).
+Plataforma centralizada de **Observabilidade e Engenharia** em Spring Boot 4 (Java 21), integrando:
 
-🚀 O que este projeto faz?
+- **Traces Distribuídos**: OpenTelemetry + **Grafana Tempo**
+- **Logs Estruturados (correlacionados por `traceId`)**: OpenTelemetry + **Grafana Loki**
+- **Métricas da JVM & HTTP**: Micrometer + **Prometheus**
+- **Continuous Profiling (CPU & Memory Allocation)**: **Grafana Pyroscope**
+- **Gestão Ágil & Produtividade**: Integração com a API v3 do **Jira Cloud** via Grafana Infinity Datasource
 
-A classe AllocationController expõe dois endpoints para simular diferentes cenários de uso de memória:
+---
 
-/alloc/bytes: Aloca blocos grandes de bytes (byte[] de 1 MB cada) até atingir o limite solicitado, simulando o consumo massivo de memória em arrays.
+## 📂 Estrutura do Projeto
 
-/alloc/objects: Cria um grande volume de pequenos objetos (String e instâncias de HashMap), simulando alta pressão sobre o Garbage Collector (GC).
-
-🛠️ Requisitos
-
-Docker e Docker Compose instalados na máquina.
-
-Java 17+ e Maven (caso queira compilar o projeto localmente).
-
-📂 Estrutura do Projeto
-
-Certifique-se de que a estrutura do seu projeto na raiz contenha os seguintes arquivos para rodar com o Pyroscope:
-
-meu-projeto-spring/
+```text
+observability-hub/
 ├── Dockerfile
 ├── docker-compose.yml
-├── pyroscope.jar          # Agente Java do Pyroscope baixado da release oficial
+├── otel-collector-config.yaml
+├── tempo.yaml
+├── loki.yaml
+├── prometheus.yml
+├── grafana/
+│   └── provisioning/
+│       ├── datasources/datasources.yml
+│       └── dashboards/
+│           ├── grafana-tempo-dashboard.json
+│           ├── jira-dashboard.json
+│           ├── pyroscope-overview.json
+│           └── spring-boot-prometheus.json
 ├── pom.xml
 └── src/
     └── main/
-        └── java/
-            └── com/
-                └── example/
-                    └── pyroscope/
-                        └── pyroscope/
-                            └── AllocationController.java
+        ├── java/com/example/observability/
+        │   ├── ObservabilityHubApplication.java
+        │   ├── AllocationController.java
+        │   └── OpenTelemetryLogbackConfig.java
+        └── resources/
+            └── application.yaml
+```
 
+---
 
-⚙️ Configuração e Execução
+## ⚙️ Como Compilar e Executar
 
-Passo 1: Baixar o Agente do Pyroscope
+### 1. Gerar o pacote `.jar` da aplicação
+```bash
+./mvnw clean package -DskipTests
+```
+O artefato será gerado em `target/observability-hub-0.0.1-SNAPSHOT.jar`.
 
-Na raiz do seu projeto (onde está o docker-compose.yml), baixe o agente Java oficial:
+### 2. Subir toda a stack com Docker Compose
+```bash
+docker compose up -d --build
+```
 
-wget https://github.com/grafana/pyroscope-java/releases/latest/download/pyroscope.jar
+---
 
+## 🧪 Endpoints de Simulação (Logs, Traces, Métricas e Profiling)
 
-Passo 2: Compilar a Aplicação Spring Boot
+- **Alocação de blocos de bytes (`byte[]` de 1 MB)**:
+  ```bash
+  curl "http://localhost:8080/alloc/bytes?mb=20"
+  ```
+- **Alocação de objetos em `HashMap` (pressão no GC)**:
+  ```bash
+  curl "http://localhost:8080/alloc/objects?items=200000"
+  ```
 
-Gere o pacote executável .jar do projeto:
+---
 
-mvn clean package -DskipTests
+## 📊 Dashboards Provisionados no Grafana (`http://localhost:3000`)
 
-
-(Confirme se o nome gerado na pasta target/ confere com o configurado no seu Dockerfile, por exemplo: pyroscope-0.0.1-SNAPSHOT.jar)
-
-Passo 3: Subir o ambiente com Docker Compose
-
-Execute o comando para compilar a imagem da aplicação e subir tanto o Spring Boot quanto o servidor Pyroscope:
-
-docker-compose up --build
-
-
-🧪 Testando os Endpoints de Alocação
-
-Com o ambiente rodando, você pode disparar requisições para forçar o consumo de memória e gerar dados para o perfilador:
-
-Gerar alocação de blocos de bytes (ex: 50 MB):
-
-curl "http://localhost:8080/alloc/bytes?mb=50"
-
-
-Gerar alocação de muitos objetos pequenos (ex: 500.000 itens):
-
-curl "http://localhost:8080/alloc/objects?items=500000"
-
-
-📈 Visualizando os Dados no Pyroscope
-
-Abra o navegador e acesse o painel do Pyroscope: http://localhost:4040
-
-No menu superior esquerdo, selecione a aplicação correspondente configurada (minha-api-spring ou equivalente).
-
-Selecione o tipo de métrica voltado a alocação (alloc).
-
-Navegue pelo Flamegraph para inspecionar exatamente quais métodos (allocateBytes ou allocateObjects) e classes consumiram mais memória na pilha de execução da JVM.
+1. **OpenTelemetry & Tempo - Traces e Logs (Trace ID)** (`tempo-trace-dashboard`)
+2. **Jira - Issues, Sprints, Velocidade & Lead Time** (`jira-overview-dashboard`)
+3. **Pyroscope - Profiling** (`pyroscope-overview`)
+4. **Spring Boot Prometheus Metrics** (`spring-boot-prometheus`)

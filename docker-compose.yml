@@ -46,6 +46,10 @@ services:
     environment:
       - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_INSTALL_PLUGINS=yesoreyeram-infinity-datasource
+      - JIRA_URL=${URL_JIRA}
+      - JIRA_USER=${EMAIL_JIRA}
+      - JIRA_API_TOKEN=${TOKEN_JIRA}
     volumes:
       - ./grafana/provisioning:/etc/grafana/provisioning
     depends_on:
@@ -73,17 +77,17 @@ services:
       - "server"
       - "-metastore.min-ready-duration=0"
 
-  spring-app:
+  observability-hub:
     build: .
-    container_name: spring-spring-app
+    container_name: observability-hub
     ports:
       - "8080:8080"
     environment:
-      - PYROSCOPE_APPLICATION_NAME=spring-boot-alloc-demo
+      - PYROSCOPE_APPLICATION_NAME=observability-hub
       - PYROSCOPE_SERVER_ADDRESS=http://pyroscope:4040
       - PYROSCOPE_PROFILER_ALLOC=512k
       - PYROSCOPE_PROFILER_CPU=false
-      - OTEL_SERVICE_NAME=pyroscope-app
+      - OTEL_SERVICE_NAME=observability-hub
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
       - OTEL_EXPORTER_OTLP_PROTOCOL=grpc
       - OTEL_LOGS_EXPORTER=otlp

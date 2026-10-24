@@ -4,7 +4,7 @@
   "tags": ["opentelemetry", "tempo", "loki", "traces", "logs"],
   "timezone": "browser",
   "schemaVersion": 39,
-  "version": 2,
+  "version": 4,
   "editable": true,
   "refresh": "10s",
   "time": {
@@ -15,7 +15,7 @@
     "list": [
       {
         "name": "trace_id",
-        "label": "Trace ID",
+        "label": "Trace ID (digite e pressione Enter)",
         "type": "textbox",
         "query": "",
         "current": {
@@ -50,9 +50,9 @@
     },
     {
       "type": "table",
-      "title": "Traces Recentes no Tempo (Clique no Trace ID para inspecionar os Spans)",
+      "title": "Traces no Tempo (Filtrado por Trace ID: $trace_id)",
       "id": 2,
-      "gridPos": { "h": 9, "w": 24, "x": 0, "y": 1 },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 1 },
       "datasource": {
         "type": "tempo",
         "uid": "tempo"
@@ -86,9 +86,53 @@
             "uid": "tempo"
           },
           "queryType": "traceql",
-          "query": "{}",
+          "query": "{ trace:id =~ \".*$trace_id.*\" }",
           "limit": 50,
           "tableType": "traces"
+        }
+      ]
+    },
+    {
+      "type": "table",
+      "title": "Spans Detalhados no Tempo (Filtrado por Trace ID: $trace_id)",
+      "id": 8,
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 1 },
+      "datasource": {
+        "type": "tempo",
+        "uid": "tempo"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": { "type": "auto" },
+            "inspect": false,
+            "filterable": true
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false,
+          "reducer": ["sum"],
+          "countRows": false,
+          "fields": ""
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "tempo",
+            "uid": "tempo"
+          },
+          "queryType": "traceql",
+          "query": "{ trace:id =~ \".*$trace_id.*\" }",
+          "limit": 50,
+          "tableType": "spans"
         }
       ]
     },
@@ -96,7 +140,7 @@
       "type": "timeseries",
       "title": "Volume de Traces / Spans por Endpoint (req/s)",
       "id": 3,
-      "gridPos": { "h": 7, "w": 12, "x": 0, "y": 10 },
+      "gridPos": { "h": 7, "w": 12, "x": 0, "y": 9 },
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -137,7 +181,7 @@
       "type": "timeseries",
       "title": "Latência P95 dos Traces por Endpoint",
       "id": 4,
-      "gridPos": { "h": 7, "w": 12, "x": 12, "y": 10 },
+      "gridPos": { "h": 7, "w": 12, "x": 12, "y": 9 },
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -177,7 +221,7 @@
       "type": "row",
       "title": "Logs do OpenTelemetry (Correlacionados por Trace ID)",
       "collapsed": false,
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 17 },
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 16 },
       "id": 5,
       "panels": []
     },
@@ -185,7 +229,7 @@
       "type": "table",
       "title": "Tabela de Logs OpenTelemetry (com Trace ID e Span ID)",
       "id": 6,
-      "gridPos": { "h": 9, "w": 24, "x": 0, "y": 18 },
+      "gridPos": { "h": 9, "w": 24, "x": 0, "y": 17 },
       "datasource": {
         "type": "loki",
         "uid": "loki"
@@ -203,13 +247,18 @@
           {
             "matcher": { "id": "byName", "options": "trace_id" },
             "properties": [
-              { "id": "displayName", "value": "Trace ID (Abrir no Tempo)" },
-              { "id": "custom.width", "value": 280 },
+              { "id": "displayName", "value": "Trace ID (Clique para Filtrar ou Abrir no Tempo)" },
+              { "id": "custom.width", "value": 300 },
               {
                 "id": "links",
                 "value": [
                   {
-                    "title": "Ver Trace ${__value.raw} no Tempo",
+                    "title": "Filtrar Dashboard pelo Trace ${__value.raw}",
+                    "url": "/d/tempo-trace-dashboard?var-trace_id=${__value.raw}&${__url_time_range}",
+                    "targetBlank": false
+                  },
+                  {
+                    "title": "Abrir Trace ${__value.raw} no Tempo (Explore)",
                     "url": "/explore?left=%7B%22datasource%22:%22tempo%22,%22queries%22:%5B%7B%22refId%22:%22A%22,%22queryType%22:%22traceql%22,%22query%22:%22${__value.raw}%22%7D%5D,%22range%22:%7B%22from%22:%22${__from}%22,%22to%22:%22${__to}%22%7D%7D",
                     "targetBlank": true
                   }
@@ -303,7 +352,7 @@
             "type": "loki",
             "uid": "loki"
           },
-          "expr": "{service_name=~\".+\"} |= \"$search\" | trace_id =~ \".*$trace_id.*\"",
+          "expr": "{service_name=~\".+\"} |= \"$search\" | trace_id =~ \"(?i).*$trace_id.*\"",
           "queryType": "range",
           "maxLines": 200
         }
@@ -313,7 +362,7 @@
       "type": "logs",
       "title": "Stream de Logs OpenTelemetry (Expanda a linha para clicar no botão TraceID -> Tempo)",
       "id": 7,
-      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 27 },
+      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 26 },
       "datasource": {
         "type": "loki",
         "uid": "loki"
@@ -335,7 +384,7 @@
             "type": "loki",
             "uid": "loki"
           },
-          "expr": "{service_name=~\".+\"} |= \"$search\" | trace_id =~ \".*$trace_id.*\" | line_format \"[trace_id={{.trace_id}} | span_id={{.span_id}}] {{__line__}}\"",
+          "expr": "{service_name=~\".+\"} |= \"$search\" | trace_id =~ \"(?i).*$trace_id.*\" | line_format \"[trace_id={{.trace_id}} | span_id={{.span_id}}] {{__line__}}\"",
           "queryType": "range",
           "maxLines": 200
         }
