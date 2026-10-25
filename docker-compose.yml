@@ -186,6 +186,8 @@ services:
     container_name: observability-hub
     ports:
       - "8080:8080"
+    volumes:
+      - ./target/observability-hub-0.0.1-SNAPSHOT.jar:/app/app.jar
     environment:
       - PYROSCOPE_APPLICATION_NAME=observability-hub
       - PYROSCOPE_SERVER_ADDRESS=http://pyroscope:4040
@@ -197,6 +199,8 @@ services:
       - OTEL_EXPORTER_OTLP_PROTOCOL=grpc
       - OTEL_LOGS_EXPORTER=otlp
       - OTEL_METRICS_EXPORTER=none
+      - OTEL_TRACES_SAMPLER=parentbased_traceidratio
+      - OTEL_TRACES_SAMPLER_ARG=0.1
       - JAVA_TOOL_OPTIONS=-Xmx512m -Xms256m
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:29092
     depends_on:

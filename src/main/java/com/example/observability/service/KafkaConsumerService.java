@@ -3,6 +3,7 @@ package com.example.observability.service;
 import com.example.observability.dto.UserRegisteredEvent;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 import lombok.extern.log4j.Log4j2;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -23,7 +24,9 @@ public class KafkaConsumerService {
     private static final int MAX_STORED_EVENTS = 200;
 
     private final JsonMapper jsonMapper;
-    private final Counter consumedMessagesCounter;
+    private final MeterRegistry meterRegistry;
+    private final Counter consumedSuccessCounter;
+    private final Counter consumedFailureCounter;
     private final Deque<UserRegisteredEvent> consumedUserEvents = new ConcurrentLinkedDeque<>();
     private final AtomicInteger userEventsCount = new AtomicInteger(0);
     private final Deque<Map<String, Object>> consumedCustomEvents = new ConcurrentLinkedDeque<>();
@@ -31,44 +34,84 @@ public class KafkaConsumerService {
 
     public KafkaConsumerService(JsonMapper jsonMapper, MeterRegistry meterRegistry) {
         this.jsonMapper = jsonMapper;
-        this.consumedMessagesCounter = Counter.builder("kafka.messages.consumed.total")
-                .description("Número total de mensagens consumidas do Kafka pela aplicação")
+        this.meterRegistry = meterRegistry;
+        this.consumedSuccessCounter = Counter.builder("kafka.messages.consumed.total")
+                .description("Número total de mensagens consumidas com sucesso do Kafka pela aplicação")
+                .tag("status", "success")
+                .register(meterRegistry);
+        this.consumedFailureCounter = Counter.builder("kafka.messages.consumed.total")
+                .description("Número total de falhas ao consumir mensagens do Kafka pela aplicação")
+                .tag("status", "failure")
                 .register(meterRegistry);
     }
 
     @KafkaListener(topics = "${app.kafka.topics.user-registrations}", groupId = "${spring.kafka.consumer.group-id}")
     public void consumeUserRegisteredEvent(ConsumerRecord<String, String> record) {
-        log.info("Consumindo evento de registo do tópico [{}], partição={}, offset={}, key={}, payload={}",
-                record.topic(), record.partition(), record.offset(), record.key(), record.value());
+        Timer.Sample sample = Timer.start(meterRegistry);
+        try {
+            log.info("Consumindo evento de registo do tópico [{}], partição={}, offset={}, key={}, payload={}",
+                    record.topic(), record.partition(), record.offset(), record.key(), record.value());
 
-        UserRegisteredEvent event = jsonMapper.readValue(record.value(), UserRegisteredEvent.class);
-        consumedUserEvents.addLast(event);
-        if (userEventsCount.incrementAndGet() > MAX_STORED_EVENTS && consumedUserEvents.pollFirst() != null) {
-            userEventsCount.decrementAndGet();
+            UserRegisteredEvent event = jsonMapper.readValue(record.value(), UserRegisteredEvent.class);
+            consumedUserEvents.addLast(event);
+            if (userEventsCount.incrementAndGet() > MAX_STORED_EVENTS && consumedUserEvents.pollFirst() != null) {
+                userEventsCount.decrementAndGet();
+            }
+            consumedSuccessCounter.increment();
+            sample.stop(Timer.builder("kafka.consumer.processing.time")
+                    .description("Tempo de processamento de mensagens pelo consumidor Kafka")
+                    .tag("topic", record.topic())
+                    .tag("status", "success")
+                    .register(meterRegistry));
+
+            log.info("Evento de utilizador processado pelo consumer com sucesso: eventId={}, email={}",
+                    event.eventId(), event.email());
+        } catch (Exception e) {
+            consumedFailureCounter.increment();
+            sample.stop(Timer.builder("kafka.consumer.processing.time")
+                    .description("Tempo de processamento de mensagens pelo consumidor Kafka")
+                    .tag("topic", record.topic())
+                    .tag("status", "failure")
+                    .register(meterRegistry));
+            log.error("Erro ao processar evento do tópico [{}]: {}", record.topic(), e.getMessage(), e);
+            throw e;
         }
-        consumedMessagesCounter.increment();
-
-        log.info("Evento de utilizador processado pelo consumer com sucesso: eventId={}, email={}",
-                event.eventId(), event.email());
     }
 
     @KafkaListener(topics = "${app.kafka.topics.custom-events}", groupId = "${spring.kafka.consumer.group-id}")
     public void consumeCustomEvent(ConsumerRecord<String, String> record) {
-        log.info("Consumindo evento customizado do tópico [{}], partição={}, offset={}, key={}, value={}",
-                record.topic(), record.partition(), record.offset(), record.key(), record.value());
+        Timer.Sample sample = Timer.start(meterRegistry);
+        try {
+            log.info("Consumindo evento customizado do tópico [{}], partição={}, offset={}, key={}, value={}",
+                    record.topic(), record.partition(), record.offset(), record.key(), record.value());
 
-        consumedCustomEvents.addLast(Map.of(
-                "topic", record.topic(),
-                "partition", record.partition(),
-                "offset", record.offset(),
-                "key", record.key() != null ? record.key() : "",
-                "message", record.value() != null ? record.value() : "",
-                "consumedAt", Instant.now().toString()
-        ));
-        if (customEventsCount.incrementAndGet() > MAX_STORED_EVENTS && consumedCustomEvents.pollFirst() != null) {
-            customEventsCount.decrementAndGet();
+            consumedCustomEvents.addLast(Map.of(
+                    "topic", record.topic(),
+                    "partition", record.partition(),
+                    "offset", record.offset(),
+                    "key", record.key() != null ? record.key() : "",
+                    "message", record.value() != null ? record.value() : "",
+                    "consumedAt", Instant.now().toString()
+            ));
+            if (customEventsCount.incrementAndGet() > MAX_STORED_EVENTS && consumedCustomEvents.pollFirst() != null) {
+                customEventsCount.decrementAndGet();
+            }
+            consumedSuccessCounter.increment();
+            sample.stop(Timer.builder("kafka.consumer.processing.time")
+                    .description("Tempo de processamento de mensagens pelo consumidor Kafka")
+                    .tag("topic", record.topic())
+                    .tag("status", "success")
+                    .register(meterRegistry));
+        } catch (Exception e) {
+            consumedFailureCounter.increment();
+            sample.stop(Timer.builder("kafka.consumer.processing.time")
+                    .description("Tempo de processamento de mensagens pelo consumidor Kafka")
+                    .tag("topic", record.topic())
+                    .tag("status", "failure")
+                    .register(meterRegistry));
+            log.error("Erro ao processar evento customizado do tópico [{}]: {}", record.topic(), e.getMessage(), e);
+            throw e;
         }
-        consumedMessagesCounter.increment();
     }
 
     public List<UserRegisteredEvent> getConsumedUserEvents() {

@@ -2,6 +2,7 @@ package com.example.observability.service;
 
 import com.example.observability.dto.TaxResult;
 import com.example.observability.dto.UserDto;
+import com.example.observability.exception.BusinessValidationException;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
@@ -54,16 +55,19 @@ public class MicrometerService {
             // Incrementa o contador de sucesso
             userRegistrationSuccessCounter.increment();
 
-        } catch (Exception e) {
-            // Incrementa o contador de falhas
+        } catch (BusinessValidationException e) {
+            // Incrementa o contador de falhas e propaga sem recriar stack trace
             userRegistrationFailureCounter.increment();
-            throw new RuntimeException("Erro ao registar utilizador", e);
+            throw e;
+        } catch (Exception e) {
+            userRegistrationFailureCounter.increment();
+            throw e;
         }
     }
 
     private void saveToDatabase(UserDto dto) {
         if (dto == null || dto.name() == null || dto.name().isBlank() || dto.email() == null || dto.email().isBlank()) {
-            throw new IllegalArgumentException("Dados do utilizador inválidos: nome e email são obrigatórios");
+            throw new BusinessValidationException("Dados do utilizador inválidos: nome e email são obrigatórios");
         }
         users.addLast(dto);
         if (usersCount.incrementAndGet() > MAX_STORED_USERS && users.pollFirst() != null) {

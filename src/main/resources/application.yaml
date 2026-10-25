@@ -30,7 +30,7 @@ app:
 management:
   tracing:
     sampling:
-      probability: 1.0 # 1.0 = 100% das requisições rastreadas (ajuste em produção)
+      probability: ${OTEL_TRACES_SAMPLER_ARG:0.1} # 10% de amostragem para não esgotar a RAM do Tempo/WSL2 em testes de stress
   opentelemetry:
     tracing:
       export:
@@ -61,5 +61,10 @@ management:
       application: observability-hub # Nome da aplicação que aparecerá no Grafana
 
 logging:
+  level:
+    com.example.observability.service.KafkaProducerService: WARN
+    com.example.observability.service.KafkaConsumerService: WARN
+    com.example.observability.controller.KafkaController: WARN
+    com.example.observability.controller.MicrometerController: WARN
   pattern:
     level: "%5p [${spring.application.name:},traceId=%X{traceId:-}%X{trace_id:-},spanId=%X{spanId:-}%X{span_id:-}]"

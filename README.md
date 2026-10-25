@@ -25,8 +25,18 @@ observability-hub/
 ├── loki.yaml
 ├── prometheus.yml
 ├── requests.http                     # Requisições prontas para executar direto no IntelliJ IDEA
-├── k6-load-test.js                   # Script de teste de carga em JavaScript (Grafana k6)
-├── k6-kafka-stress-test.js           # Script de teste de stress dos fluxos Apache Kafka (Grafana k6)
+├── load-tests/
+│   ├── k6/
+│   │   ├── smoke-test.js             # Teste rápido de fumaça (validação básica)
+│   │   ├── load-test.js              # Teste de carga com ramp-up gradual de RPS
+│   │   ├── stress-test.js            # Teste de estresse para encontrar limites de falha
+│   │   └── alloc-test.js             # Carga de alocação de memória (profiling/GC)
+│   ├── scenarios/                    # Cenários reutilizáveis por domínio (importados pelos testes acima)
+│   │   ├── common.js                 # BASE_URL e helpers compartilhados
+│   │   ├── kafka.js                  # Publicação/consumo Kafka + resumo de lag no Prometheus
+│   │   ├── users.js                  # Registro de utilizador
+│   │   └── alloc.js                  # Alocação de memória (profiling)
+│   └── thresholds.js                 # Definição de SLOs e falhas automáticas (ex: p95 < 200ms)
 ├── grafana/
 │   └── provisioning/
 │       ├── datasources/
@@ -37,6 +47,7 @@ observability-hub/
 │           ├── dashboards.yml
 │           ├── grafana-tempo-dashboard.json
 │           ├── jira-dashboard.json
+│           ├── kafka-observability-dashboard.json
 │           ├── micrometer-business-metrics.json
 │           ├── pyroscope-overview.json
 │           └── spring-boot-prometheus.json
@@ -142,41 +153,50 @@ Você pode disparar todas as requisições diretamente pelo **IntelliJ IDEA** ab
 
 ---
 
-## 🚀 Teste de Carga com Grafana k6
+## 🚀 Testes de Performance com Grafana k6 (`load-tests/`)
 
-O arquivo [`k6-load-test.js`](./k6-load-test.js) utiliza o executor `ramping-arrival-rate` para disparar até **300 requisições por segundo** contra o endpoint `POST /micrometer/register-user`:
+Os testes do **Grafana k6** estão organizados em [`load-tests/`](./load-tests), compartilhando as definições de SLOs em [`load-tests/thresholds.js`](./load-tests/thresholds.js):
+
+### 1. Smoke Test ([`load-tests/k6/smoke-test.js`](./load-tests/k6/smoke-test.js))
+Validação rápida (2 VUs por 15s, SLO `p95 < 200ms` e 0% de falhas) cobrindo `/actuator/health`, `/micrometer/register-user`, `/kafka/publish`, `/kafka/consumed` e `/alloc/bytes`:
+```powershell
+docker run --rm -v "${PWD}/load-tests:/load-tests" -e BASE_URL=http://host.docker.internal:8080 grafana/k6 run /load-tests/k6/smoke-test.js
+```
+
+### 2. Load Test ([`load-tests/k6/load-test.js`](./load-tests/k6/load-test.js))
+Utiliza o executor `ramping-arrival-rate` para disparar até **300 requisições por segundo** contra o endpoint `POST /micrometer/register-user`:
 - Sobe de **50 req/s** para **200 req/s** em 20s;
 - Sustenta **300 req/s** por 40s;
 - Desacelera até 0 em 10s.
 
-### Executar via Docker (com 5% de falhas simuladas para acionar métricas de erro e alerta):
+#### Executar via Docker (com 5% de falhas simuladas):
 ```powershell
-cmd /c "docker run --rm -i -e BASE_URL=http://host.docker.internal:8080 grafana/k6 run - < k6-load-test.js"
+docker run --rm -v "${PWD}/load-tests:/load-tests" -e BASE_URL=http://host.docker.internal:8080 grafana/k6 run /load-tests/k6/load-test.js
 ```
 
-### Executar com 100% de sucesso (`ERROR_RATE=0`, apenas respostas HTTP 201):
+#### Executar com 100% de sucesso (`ERROR_RATE=0`, apenas respostas HTTP 201):
 ```powershell
-cmd /c "docker run --rm -i -e BASE_URL=http://host.docker.internal:8080 -e ERROR_RATE=0 grafana/k6 run - < k6-load-test.js"
+docker run --rm -v "${PWD}/load-tests:/load-tests" -e BASE_URL=http://host.docker.internal:8080 -e ERROR_RATE=0 grafana/k6 run /load-tests/k6/load-test.js
 ```
 
 ---
 
-## 🔥 Teste de Stress do Apache Kafka com Grafana k6
+## 🔥 Stress Test do Apache Kafka ([`load-tests/k6/stress-test.js`](./load-tests/k6/stress-test.js))
 
-O arquivo [`k6-kafka-stress-test.js`](./k6-kafka-stress-test.js) executa **3 cenários simultâneos** durante 80s (chegando a um pico combinado de **~750 mensagens/s** distribuídas nas 3 partições de cada tópico) e exibe ao final um resumo comparativo das métricas `kafka_messages_published_total` vs `kafka_messages_consumed_total` coletadas do `/actuator/prometheus`:
+O arquivo [`load-tests/k6/stress-test.js`](./load-tests/k6/stress-test.js) executa **3 cenários simultâneos** e exibe ao final um resumo comparativo das métricas `kafka_messages_published_total` vs `kafka_messages_consumed_total` coletadas do `/actuator/prometheus`:
 
-1. **`stress_kafka_publish`** (`POST /kafka/publish` → tópico `observability-events-topic`): sobe de 50 msg/s até um pico de **450 msg/s**;
-2. **`stress_user_registration_kafka`** (`POST /micrometer/register-user` → tópico `user-registrations-topic`): sobe de 30 req/s até **300 req/s**;
-3. **`poll_kafka_consumed`** (`GET /kafka/consumed`): realiza **5 leituras/s** concorrentes das listas de eventos processados pelos `@KafkaListener`.
+1. **`stress_kafka_publish`** (`POST /kafka/publish` → tópico `observability-events-topic`);
+2. **`stress_user_registration_kafka`** (`POST /micrometer/register-user` → tópico `user-registrations-topic`);
+3. **`poll_kafka_consumed`** (`GET /kafka/consumed`): realiza leituras concorrentes das listas de eventos processados pelos `@KafkaListener`.
 
 ### Executar o teste de stress (direto na rede interna do Docker Compose):
 ```powershell
-cmd /c "docker run --rm -i --network observability-hub_default -e BASE_URL=http://observability-hub:8080 grafana/k6 run - < k6-kafka-stress-test.js"
+docker run --rm --network observability-hub_default -v "${PWD}/load-tests:/load-tests" -e BASE_URL=http://observability-hub:8080 grafana/k6 run /load-tests/k6/stress-test.js
 ```
 
 ### Executar o teste de stress simulando 5% de falhas no registo de utilizador (`ERROR_RATE=0.05`):
 ```powershell
-cmd /c "docker run --rm -i --network observability-hub_default -e BASE_URL=http://observability-hub:8080 -e ERROR_RATE=0.05 grafana/k6 run - < k6-kafka-stress-test.js"
+docker run --rm --network observability-hub_default -v "${PWD}/load-tests:/load-tests" -e BASE_URL=http://observability-hub:8080 -e ERROR_RATE=0.05 grafana/k6 run /load-tests/k6/stress-test.js
 ```
 
 ---
@@ -204,3 +224,5 @@ O arquivo [`grafana/provisioning/alerting/alerts.yml`](./grafana/provisioning/al
    - Flamegraphs de alocação de memória e CPU gerados pelo agente Java do Pyroscope.
 5. **Jira - Issues, Sprints, Velocidade & Lead Time** (`/d/jira-overview-dashboard`)
    - Métricas de engenharia e produtividade integradas à API v3 do Jira Cloud.
+6. **Apache Kafka - Stress Test, Vazão & Tempo de Processamento** (`/d/kafka-stress-metrics`)
+   - Contadores de sucesso/falha de publicação e consumo (`kafka_messages_published_total` e `kafka_messages_consumed_total`), Consumer Lag residual, Timers de duração do Producer ACK (`kafka_producer_processing_time_seconds`) e do `@KafkaListener` (`kafka_consumer_processing_time_seconds`), além da latência e taxa das requisições HTTP do teste de stress do k6.
