@@ -20,14 +20,22 @@ Content-Type: application/json
 GET http://localhost:8080/micrometer/heavy-calculations
 Accept: application/json
 
-### 4. Alocar Blocos de Bytes na Memória (10 MB)
+### 4. Simular Erro HTTP 500 (5xx -> dispara alerta > 2% em 5m no Grafana)
+GET http://localhost:8080/micrometer/simulate-5xx
+Accept: application/json
+
+### 5. Alocar Blocos de Bytes na Memória (10 MB)
 GET http://localhost:8080/alloc/bytes?mb=10
 Accept: application/json
 
-### 5. Alocar Objetos no HashMap (Pressão no GC)
+### 6. Alocar Objetos no HashMap (Pressão no GC)
 GET http://localhost:8080/alloc/objects?items=200000
 Accept: application/json
 
-### 6. Consultar Métricas Expostas no Prometheus (Actuator)
+### 7. Consultar Métricas Expostas no Prometheus (Actuator)
 GET http://localhost:8080/actuator/prometheus
 Accept: text/plain
+
+### 8. Consultar Health Check (inclui customServiceHealth)
+GET http://localhost:8080/actuator/health
+Accept: application/json

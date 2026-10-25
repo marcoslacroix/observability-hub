@@ -36,6 +36,13 @@ services:
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
 
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: mailpit
+    ports:
+      - "8025:8025" # Interface Web para visualizar e-mails de alerta (http://localhost:8025)
+      - "1025:1025" # Servidor SMTP
+
   grafana:
     image: grafana/grafana:latest
     container_name: grafana
@@ -48,6 +55,15 @@ services:
       - JIRA_URL=${URL_JIRA}
       - JIRA_USER=${EMAIL_JIRA}
       - JIRA_API_TOKEN=${TOKEN_JIRA}
+      # Configuração de SMTP e destinatário para alertas por e-mail
+      - ALERT_EMAIL_TO=${ALERT_EMAIL_TO:-alertas@observability-hub.local}
+      - GF_SMTP_ENABLED=true
+      - GF_SMTP_HOST=${SMTP_HOST:-mailpit:1025}
+      - GF_SMTP_USER=${SMTP_USER:-}
+      - GF_SMTP_PASSWORD=${SMTP_PASSWORD:-}
+      - GF_SMTP_FROM_ADDRESS=${SMTP_FROM_ADDRESS:-alertas@observability-hub.local}
+      - GF_SMTP_FROM_NAME=Grafana Observability Hub
+      - GF_SMTP_SKIP_VERIFY=true
     volumes:
       - ./grafana/provisioning:/etc/grafana/provisioning
     depends_on:
@@ -55,6 +71,7 @@ services:
       - pyroscope
       - tempo
       - loki
+      - mailpit
 
   tempo:
     image: grafana/tempo:latest

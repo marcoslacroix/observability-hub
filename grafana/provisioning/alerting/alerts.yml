@@ -1,0 +1,115 @@
+apiVersion: 1
+
+contactPoints:
+  - orgId: 1
+    name: email-alertas
+    receivers:
+      - uid: email_receiver_5xx
+        type: email
+        disableResolveMessage: false
+        settings:
+          addresses: ${ALERT_EMAIL_TO}
+          singleEmail: true
+          subject: "[ALERTA Grafana] Taxa de erros HTTP 5xx acima de 2% (5m) - observability-hub"
+          message: |
+            Alerta disparado no Observability Hub:
+            A taxa de respostas HTTP 5xx nos últimos 5 minutos ultrapassou o limite de 2%.
+            Verifique o dashboard no Grafana (http://localhost:3000) e os traces/logs no Tempo e Loki.
+
+policies:
+  - orgId: 1
+    receiver: email-alertas
+    group_by:
+      - grafana_folder
+      - alertname
+    group_wait: 10s
+    group_interval: 1m
+    repeat_interval: 1h
+    routes:
+      - receiver: email-alertas
+        object_matchers:
+          - ["severity", "=", "critical"]
+        group_wait: 10s
+        group_interval: 1m
+        repeat_interval: 30m
+
+groups:
+  - orgId: 1
+    name: spring-boot-5xx-alerts
+    folder: Alertas Spring Boot
+    interval: 30s
+    rules:
+      - uid: http_5xx_rate_2pct_5m
+        title: "Taxa de Erros HTTP 5xx > 2% (Janela de 5 minutos)"
+        condition: C
+        for: 1m
+        noDataState: OK
+        execErrState: Error
+        annotations:
+          summary: "Taxa de erros HTTP 5xx ultrapassou 2% nos últimos 5 minutos"
+          description: "A aplicação observability-hub apresentou mais de 2% de respostas HTTP 5xx na janela dos últimos 5 minutos."
+        labels:
+          severity: critical
+          application: observability-hub
+        data:
+          # A: Consulta PromQL calculando o percentual (0 a 100%) de respostas 5xx nos últimos 5 minutos
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: prometheus
+            model:
+              refId: A
+              editorMode: code
+              expr: >-
+                (
+                  sum(rate(http_server_requests_seconds_count{application="observability-hub", status=~"5..", uri!~"/actuator.*"}[5m]))
+                  or vector(0)
+                )
+                /
+                clamp_min(
+                  sum(rate(http_server_requests_seconds_count{application="observability-hub", uri!~"/actuator.*"}[5m])),
+                  0.0001
+                ) * 100
+              instant: true
+              range: false
+              intervalMs: 1000
+              maxDataPoints: 43200
+
+          # B: Reduz a série para o último valor calculado
+          - refId: B
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: __expr__
+            model:
+              refId: B
+              type: reduce
+              expression: A
+              reducer: last
+              settings:
+                mode: replaceNN
+                replaceWithValue: 0
+
+          # C: Condição de disparo (> 2%)
+          - refId: C
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: __expr__
+            model:
+              refId: C
+              type: threshold
+              expression: B
+              conditions:
+                - evaluator:
+                    type: gt
+                    params:
+                      - 2
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - C
+                  reducer:
+                    type: last
