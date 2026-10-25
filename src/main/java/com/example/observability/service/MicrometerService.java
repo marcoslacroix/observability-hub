@@ -9,18 +9,22 @@ import lombok.SneakyThrows;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.util.List;
+import java.util.Deque;
 import java.util.Random;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
 public class MicrometerService {
+
+    private static final int MAX_STORED_USERS = 200;
 
     private final MeterRegistry meterRegistry;
     private final KafkaProducerService kafkaProducerService;
     private final Counter userRegistrationSuccessCounter;
     private final Counter userRegistrationFailureCounter;
-    private final List<UserDto> users = new CopyOnWriteArrayList<>();
+    private final Deque<UserDto> users = new ConcurrentLinkedDeque<>();
+    private final AtomicInteger usersCount = new AtomicInteger(0);
 
     // Injetamos o MeterRegistry do Micrometer (geralmente fornecido pelo Spring Boot Actuator)
     public MicrometerService(MeterRegistry meterRegistry, KafkaProducerService kafkaProducerService) {
@@ -61,7 +65,10 @@ public class MicrometerService {
         if (dto == null || dto.name() == null || dto.name().isBlank() || dto.email() == null || dto.email().isBlank()) {
             throw new IllegalArgumentException("Dados do utilizador inválidos: nome e email são obrigatórios");
         }
-        users.add(dto);
+        users.addLast(dto);
+        if (usersCount.incrementAndGet() > MAX_STORED_USERS && users.pollFirst() != null) {
+            usersCount.decrementAndGet();
+        }
     }
 
     public TaxResult calculateComplexTaxesAlternative() {

@@ -10,18 +10,24 @@ import org.springframework.stereotype.Service;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.time.Instant;
+import java.util.Deque;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
 @Log4j2
 public class KafkaConsumerService {
 
+    private static final int MAX_STORED_EVENTS = 200;
+
     private final JsonMapper jsonMapper;
     private final Counter consumedMessagesCounter;
-    private final List<UserRegisteredEvent> consumedUserEvents = new CopyOnWriteArrayList<>();
-    private final List<Map<String, Object>> consumedCustomEvents = new CopyOnWriteArrayList<>();
+    private final Deque<UserRegisteredEvent> consumedUserEvents = new ConcurrentLinkedDeque<>();
+    private final AtomicInteger userEventsCount = new AtomicInteger(0);
+    private final Deque<Map<String, Object>> consumedCustomEvents = new ConcurrentLinkedDeque<>();
+    private final AtomicInteger customEventsCount = new AtomicInteger(0);
 
     public KafkaConsumerService(JsonMapper jsonMapper, MeterRegistry meterRegistry) {
         this.jsonMapper = jsonMapper;
@@ -36,7 +42,10 @@ public class KafkaConsumerService {
                 record.topic(), record.partition(), record.offset(), record.key(), record.value());
 
         UserRegisteredEvent event = jsonMapper.readValue(record.value(), UserRegisteredEvent.class);
-        consumedUserEvents.add(event);
+        consumedUserEvents.addLast(event);
+        if (userEventsCount.incrementAndGet() > MAX_STORED_EVENTS && consumedUserEvents.pollFirst() != null) {
+            userEventsCount.decrementAndGet();
+        }
         consumedMessagesCounter.increment();
 
         log.info("Evento de utilizador processado pelo consumer com sucesso: eventId={}, email={}",
@@ -48,7 +57,7 @@ public class KafkaConsumerService {
         log.info("Consumindo evento customizado do tópico [{}], partição={}, offset={}, key={}, value={}",
                 record.topic(), record.partition(), record.offset(), record.key(), record.value());
 
-        consumedCustomEvents.add(Map.of(
+        consumedCustomEvents.addLast(Map.of(
                 "topic", record.topic(),
                 "partition", record.partition(),
                 "offset", record.offset(),
@@ -56,6 +65,9 @@ public class KafkaConsumerService {
                 "message", record.value() != null ? record.value() : "",
                 "consumedAt", Instant.now().toString()
         ));
+        if (customEventsCount.incrementAndGet() > MAX_STORED_EVENTS && consumedCustomEvents.pollFirst() != null) {
+            customEventsCount.decrementAndGet();
+        }
         consumedMessagesCounter.increment();
     }
 

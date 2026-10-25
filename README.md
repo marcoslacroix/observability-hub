@@ -26,6 +26,7 @@ observability-hub/
 ├── prometheus.yml
 ├── requests.http                     # Requisições prontas para executar direto no IntelliJ IDEA
 ├── k6-load-test.js                   # Script de teste de carga em JavaScript (Grafana k6)
+├── k6-kafka-stress-test.js           # Script de teste de stress dos fluxos Apache Kafka (Grafana k6)
 ├── grafana/
 │   └── provisioning/
 │       ├── datasources/
@@ -156,6 +157,26 @@ cmd /c "docker run --rm -i -e BASE_URL=http://host.docker.internal:8080 grafana/
 ### Executar com 100% de sucesso (`ERROR_RATE=0`, apenas respostas HTTP 201):
 ```powershell
 cmd /c "docker run --rm -i -e BASE_URL=http://host.docker.internal:8080 -e ERROR_RATE=0 grafana/k6 run - < k6-load-test.js"
+```
+
+---
+
+## 🔥 Teste de Stress do Apache Kafka com Grafana k6
+
+O arquivo [`k6-kafka-stress-test.js`](./k6-kafka-stress-test.js) executa **3 cenários simultâneos** durante 80s (chegando a um pico combinado de **~750 mensagens/s** distribuídas nas 3 partições de cada tópico) e exibe ao final um resumo comparativo das métricas `kafka_messages_published_total` vs `kafka_messages_consumed_total` coletadas do `/actuator/prometheus`:
+
+1. **`stress_kafka_publish`** (`POST /kafka/publish` → tópico `observability-events-topic`): sobe de 50 msg/s até um pico de **450 msg/s**;
+2. **`stress_user_registration_kafka`** (`POST /micrometer/register-user` → tópico `user-registrations-topic`): sobe de 30 req/s até **300 req/s**;
+3. **`poll_kafka_consumed`** (`GET /kafka/consumed`): realiza **5 leituras/s** concorrentes das listas de eventos processados pelos `@KafkaListener`.
+
+### Executar o teste de stress (direto na rede interna do Docker Compose):
+```powershell
+cmd /c "docker run --rm -i --network observability-hub_default -e BASE_URL=http://observability-hub:8080 grafana/k6 run - < k6-kafka-stress-test.js"
+```
+
+### Executar o teste de stress simulando 5% de falhas no registo de utilizador (`ERROR_RATE=0.05`):
+```powershell
+cmd /c "docker run --rm -i --network observability-hub_default -e BASE_URL=http://observability-hub:8080 -e ERROR_RATE=0.05 grafana/k6 run - < k6-kafka-stress-test.js"
 ```
 
 ---
