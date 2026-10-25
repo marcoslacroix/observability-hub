@@ -17,13 +17,15 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class MicrometerService {
 
     private final MeterRegistry meterRegistry;
+    private final KafkaProducerService kafkaProducerService;
     private final Counter userRegistrationSuccessCounter;
     private final Counter userRegistrationFailureCounter;
     private final List<UserDto> users = new CopyOnWriteArrayList<>();
 
     // Injetamos o MeterRegistry do Micrometer (geralmente fornecido pelo Spring Boot Actuator)
-    public MicrometerService(MeterRegistry meterRegistry) {
+    public MicrometerService(MeterRegistry meterRegistry, KafkaProducerService kafkaProducerService) {
         this.meterRegistry = meterRegistry;
+        this.kafkaProducerService = kafkaProducerService;
 
         // Criar ou registar os contadores com tags (metadados úteis para filtragem)
         this.userRegistrationSuccessCounter = Counter.builder("user.registrations.total")
@@ -41,6 +43,9 @@ public class MicrometerService {
         try {
             // Lógica de negócio para criar o utilizador...
             saveToDatabase(dto);
+
+            // Publica o evento de utilizador registado no Kafka
+            kafkaProducerService.publishUserRegisteredEvent(dto);
 
             // Incrementa o contador de sucesso
             userRegistrationSuccessCounter.increment();

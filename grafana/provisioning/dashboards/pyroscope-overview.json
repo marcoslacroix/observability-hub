@@ -17,7 +17,7 @@
         "datasource": { "type": "grafana-pyroscope-datasource", "uid": "pyroscope" },
         "query": {
           "type": "labelValue",
-          "profileTypeId": "process_cpu:cpu:nanoseconds:cpu:nanoseconds",
+          "profileTypeId": "memory:alloc_in_new_tlab_bytes:bytes:space:bytes",
           "labelName": "service_name",
           "refId": "PyroscopeVariableQueryEditor-VariableQuery"
         },

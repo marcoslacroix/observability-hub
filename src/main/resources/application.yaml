@@ -1,6 +1,28 @@
 spring:
   application:
     name: observability-hub
+  kafka:
+    bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      acks: all
+      retries: 3
+    consumer:
+      group-id: observability-hub-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    template:
+      observation-enabled: true # Ativa propagação de traceId/spanId (OpenTelemetry) e métricas no KafkaTemplate
+    listener:
+      observation-enabled: true # Ativa propagação de traceId/spanId (OpenTelemetry) e métricas no @KafkaListener
+
+app:
+  kafka:
+    topics:
+      user-registrations: user-registrations-topic
+      custom-events: observability-events-topic
 
 management:
   tracing:
