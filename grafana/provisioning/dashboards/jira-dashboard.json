@@ -23,13 +23,13 @@
           "text": "${JIRA_URL}",
           "value": "${JIRA_URL}"
         },
-        "hide": 0
+        "hide": 2
       },
       {
         "name": "consulta_jql",
         "label": "Filtro / Visão do Jira",
         "type": "custom",
-        "query": "Empresa Toda - Ano Atual (Desde 01/Jan) : created >= startOfYear(),Empresa Toda - Últimos 365 dias : created >= -365d,Minhas Issues no Ano Atual (Marcos) : created >= startOfYear() AND assignee = currentUser(),Minhas Issues nos Últimos 365 dias (Marcos) : created >= -365d AND assignee = currentUser(),Minhas Concluídas no Ano Atual (Marcos) : created >= startOfYear() AND assignee = currentUser() AND statusCategory = 'Done',Minha Sprint Atual (Marcos) : sprint in openSprints() AND assignee = currentUser(),Empresa Toda - Sprint Atual : sprint in openSprints(),Empresa Toda - Últimos 30 dias : created >= -30d",
+        "query": "Empresa Toda - Ano Atual (Desde 01/Jan) : created >= startOfYear(),Empresa Toda - Últimos 365 dias : created >= -365d,Minhas Issues no Ano Atual (${JIRA_USER_LABEL}) : created >= startOfYear() AND assignee = currentUser(),Minhas Issues nos Últimos 365 dias (${JIRA_USER_LABEL}) : created >= -365d AND assignee = currentUser(),Minhas Concluídas no Ano Atual (${JIRA_USER_LABEL}) : created >= startOfYear() AND assignee = currentUser() AND statusCategory = 'Done',Minha Sprint Atual (${JIRA_USER_LABEL}) : sprint in openSprints() AND assignee = currentUser(),Empresa Toda - Sprint Atual : sprint in openSprints(),Empresa Toda - Últimos 30 dias : created >= -30d",
         "current": {
           "selected": true,
           "text": "Empresa Toda - Ano Atual (Desde 01/Jan)",
@@ -48,22 +48,22 @@
           },
           {
             "selected": false,
-            "text": "Minhas Issues no Ano Atual (Marcos)",
+            "text": "Minhas Issues no Ano Atual (${JIRA_USER_LABEL})",
             "value": "created >= startOfYear() AND assignee = currentUser()"
           },
           {
             "selected": false,
-            "text": "Minhas Issues nos Últimos 365 dias (Marcos)",
+            "text": "Minhas Issues nos Últimos 365 dias (${JIRA_USER_LABEL})",
             "value": "created >= -365d AND assignee = currentUser()"
           },
           {
             "selected": false,
-            "text": "Minhas Concluídas no Ano Atual (Marcos)",
+            "text": "Minhas Concluídas no Ano Atual (${JIRA_USER_LABEL})",
             "value": "created >= startOfYear() AND assignee = currentUser() AND statusCategory = 'Done'"
           },
           {
             "selected": false,
-            "text": "Minha Sprint Atual (Marcos)",
+            "text": "Minha Sprint Atual (${JIRA_USER_LABEL})",
             "value": "sprint in openSprints() AND assignee = currentUser()"
           },
           {
@@ -264,7 +264,7 @@
     },
     {
       "type": "stat",
-      "title": "Minhas Concluídas em 365d (Marcos)",
+      "title": "Minhas Concluídas em 365d (${JIRA_USER_LABEL})",
       "id": 6,
       "gridPos": { "h": 4, "w": 4, "x": 16, "y": 1 },
       "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "jira" },
@@ -307,7 +307,7 @@
     },
     {
       "type": "stat",
-      "title": "Minhas Issues Totais em 365d (Marcos)",
+      "title": "Minhas Issues Totais em 365d (${JIRA_USER_LABEL})",
       "id": 7,
       "gridPos": { "h": 4, "w": 4, "x": 20, "y": 1 },
       "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "jira" },
@@ -765,13 +765,13 @@
           "format": "table",
           "parser": "simple",
           "root_selector": "",
-          "columns": [{ "selector": "count", "text": "Marcos Lacroix", "type": "number" }],
+          "columns": [{ "selector": "count", "text": "${JIRA_ASSIGNEE_1_LABEL}", "type": "number" }],
           "url": "${jira_url}/rest/api/3/search/approximate-count",
           "url_options": {
             "method": "POST",
             "body_type": "raw",
             "body_content_type": "application/json",
-            "data": "{\"jql\": \"${consulta_jql:raw} AND assignee = 'Dev 1'\"}"
+            "data": "{\"jql\": \"${consulta_jql:raw} AND assignee = '${JIRA_ASSIGNEE_1_NAME}'\"}"
           }
         },
         {
@@ -782,13 +782,13 @@
           "format": "table",
           "parser": "simple",
           "root_selector": "",
-          "columns": [{ "selector": "count", "text": "Marcelo Lacroix", "type": "number" }],
+          "columns": [{ "selector": "count", "text": "${JIRA_ASSIGNEE_2_LABEL}", "type": "number" }],
           "url": "${jira_url}/rest/api/3/search/approximate-count",
           "url_options": {
             "method": "POST",
             "body_type": "raw",
             "body_content_type": "application/json",
-            "data": "{\"jql\": \"${consulta_jql:raw} AND assignee = 'Dev 2'\"}"
+            "data": "{\"jql\": \"${consulta_jql:raw} AND assignee = '${JIRA_ASSIGNEE_2_NAME}'\"}"
           }
         },
         {
@@ -799,13 +799,13 @@
           "format": "table",
           "parser": "simple",
           "root_selector": "",
-          "columns": [{ "selector": "count", "text": "Dev 3", "type": "number" }],
+          "columns": [{ "selector": "count", "text": "${JIRA_ASSIGNEE_3_LABEL}", "type": "number" }],
           "url": "${jira_url}/rest/api/3/search/approximate-count",
           "url_options": {
             "method": "POST",
             "body_type": "raw",
             "body_content_type": "application/json",
-            "data": "{\"jql\": \"${consulta_jql:raw} AND assignee = 'Dev 3'\"}"
+            "data": "{\"jql\": \"${consulta_jql:raw} AND assignee = '${JIRA_ASSIGNEE_3_NAME}'\"}"
           }
         },
         {
@@ -816,13 +816,13 @@
           "format": "table",
           "parser": "simple",
           "root_selector": "",
-          "columns": [{ "selector": "count", "text": "Dev 4", "type": "number" }],
+          "columns": [{ "selector": "count", "text": "${JIRA_ASSIGNEE_4_LABEL}", "type": "number" }],
           "url": "${jira_url}/rest/api/3/search/approximate-count",
           "url_options": {
             "method": "POST",
             "body_type": "raw",
             "body_content_type": "application/json",
-            "data": "{\"jql\": \"${consulta_jql:raw} AND assignee = 'Dev 4'\"}"
+            "data": "{\"jql\": \"${consulta_jql:raw} AND assignee = '${JIRA_ASSIGNEE_4_NAME}'\"}"
           }
         },
         {
@@ -833,13 +833,13 @@
           "format": "table",
           "parser": "simple",
           "root_selector": "",
-          "columns": [{ "selector": "count", "text": "Dev 5", "type": "number" }],
+          "columns": [{ "selector": "count", "text": "${JIRA_ASSIGNEE_5_LABEL}", "type": "number" }],
           "url": "${jira_url}/rest/api/3/search/approximate-count",
           "url_options": {
             "method": "POST",
             "body_type": "raw",
             "body_content_type": "application/json",
-            "data": "{\"jql\": \"${consulta_jql:raw} AND assignee = 'Dev 5'\"}"
+            "data": "{\"jql\": \"${consulta_jql:raw} AND assignee = '${JIRA_ASSIGNEE_5_NAME}'\"}"
           }
         },
         {
@@ -850,13 +850,13 @@
           "format": "table",
           "parser": "simple",
           "root_selector": "",
-          "columns": [{ "selector": "count", "text": "Dev 6", "type": "number" }],
+          "columns": [{ "selector": "count", "text": "${JIRA_ASSIGNEE_6_LABEL}", "type": "number" }],
           "url": "${jira_url}/rest/api/3/search/approximate-count",
           "url_options": {
             "method": "POST",
             "body_type": "raw",
             "body_content_type": "application/json",
-            "data": "{\"jql\": \"${consulta_jql:raw} AND assignee = 'Dev 6'\"}"
+            "data": "{\"jql\": \"${consulta_jql:raw} AND assignee = '${JIRA_ASSIGNEE_6_NAME}'\"}"
           }
         },
         {
@@ -867,13 +867,13 @@
           "format": "table",
           "parser": "simple",
           "root_selector": "",
-          "columns": [{ "selector": "count", "text": "Dev 7", "type": "number" }],
+          "columns": [{ "selector": "count", "text": "${JIRA_ASSIGNEE_7_LABEL}", "type": "number" }],
           "url": "${jira_url}/rest/api/3/search/approximate-count",
           "url_options": {
             "method": "POST",
             "body_type": "raw",
             "body_content_type": "application/json",
-            "data": "{\"jql\": \"${consulta_jql:raw} AND assignee = 'Dev 7'\"}"
+            "data": "{\"jql\": \"${consulta_jql:raw} AND assignee = '${JIRA_ASSIGNEE_7_NAME}'\"}"
           }
         },
         {
@@ -884,13 +884,13 @@
           "format": "table",
           "parser": "simple",
           "root_selector": "",
-          "columns": [{ "selector": "count", "text": "Dev 8", "type": "number" }],
+          "columns": [{ "selector": "count", "text": "${JIRA_ASSIGNEE_8_LABEL}", "type": "number" }],
           "url": "${jira_url}/rest/api/3/search/approximate-count",
           "url_options": {
             "method": "POST",
             "body_type": "raw",
             "body_content_type": "application/json",
-            "data": "{\"jql\": \"${consulta_jql:raw} AND assignee = 'Dev 8'\"}"
+            "data": "{\"jql\": \"${consulta_jql:raw} AND assignee = '${JIRA_ASSIGNEE_8_NAME}'\"}"
           }
         },
         {
@@ -901,13 +901,13 @@
           "format": "table",
           "parser": "simple",
           "root_selector": "",
-          "columns": [{ "selector": "count", "text": "Dev 9", "type": "number" }],
+          "columns": [{ "selector": "count", "text": "${JIRA_ASSIGNEE_9_LABEL}", "type": "number" }],
           "url": "${jira_url}/rest/api/3/search/approximate-count",
           "url_options": {
             "method": "POST",
             "body_type": "raw",
             "body_content_type": "application/json",
-            "data": "{\"jql\": \"${consulta_jql:raw} AND assignee = 'Dev 9'\"}"
+            "data": "{\"jql\": \"${consulta_jql:raw} AND assignee = '${JIRA_ASSIGNEE_9_NAME}'\"}"
           }
         },
         {
@@ -918,13 +918,13 @@
           "format": "table",
           "parser": "simple",
           "root_selector": "",
-          "columns": [{ "selector": "count", "text": "Dev 10", "type": "number" }],
+          "columns": [{ "selector": "count", "text": "${JIRA_ASSIGNEE_10_LABEL}", "type": "number" }],
           "url": "${jira_url}/rest/api/3/search/approximate-count",
           "url_options": {
             "method": "POST",
             "body_type": "raw",
             "body_content_type": "application/json",
-            "data": "{\"jql\": \"${consulta_jql:raw} AND assignee = 'Dev 10'\"}"
+            "data": "{\"jql\": \"${consulta_jql:raw} AND assignee = '${JIRA_ASSIGNEE_10_NAME}'\"}"
           }
         },
         {
@@ -935,13 +935,13 @@
           "format": "table",
           "parser": "simple",
           "root_selector": "",
-          "columns": [{ "selector": "count", "text": "Dev 11", "type": "number" }],
+          "columns": [{ "selector": "count", "text": "${JIRA_ASSIGNEE_11_LABEL}", "type": "number" }],
           "url": "${jira_url}/rest/api/3/search/approximate-count",
           "url_options": {
             "method": "POST",
             "body_type": "raw",
             "body_content_type": "application/json",
-            "data": "{\"jql\": \"${consulta_jql:raw} AND assignee = 'Dev 11'\"}"
+            "data": "{\"jql\": \"${consulta_jql:raw} AND assignee = '${JIRA_ASSIGNEE_11_NAME}'\"}"
           }
         },
         {

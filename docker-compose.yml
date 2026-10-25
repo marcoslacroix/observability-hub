@@ -52,9 +52,32 @@ services:
       - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD=admin
       - GF_INSTALL_PLUGINS=yesoreyeram-infinity-datasource
-      - JIRA_URL=${URL_JIRA}
-      - JIRA_USER=${EMAIL_JIRA}
-      - JIRA_API_TOKEN=${TOKEN_JIRA}
+      - JIRA_URL=${URL_JIRA:-https://sua-empresa.atlassian.net}
+      - JIRA_USER=${EMAIL_JIRA:-usuario@empresa.com}
+      - JIRA_API_TOKEN=${TOKEN_JIRA:-}
+      - JIRA_USER_LABEL=${JIRA_USER_LABEL:-Usuário}
+      - JIRA_ASSIGNEE_1_LABEL=${JIRA_ASSIGNEE_1_LABEL:-Dev 1}
+      - JIRA_ASSIGNEE_1_NAME=${JIRA_ASSIGNEE_1_NAME:-Dev 1}
+      - JIRA_ASSIGNEE_2_LABEL=${JIRA_ASSIGNEE_2_LABEL:-Dev 2}
+      - JIRA_ASSIGNEE_2_NAME=${JIRA_ASSIGNEE_2_NAME:-Dev 2}
+      - JIRA_ASSIGNEE_3_LABEL=${JIRA_ASSIGNEE_3_LABEL:-Dev 3}
+      - JIRA_ASSIGNEE_3_NAME=${JIRA_ASSIGNEE_3_NAME:-Dev 3}
+      - JIRA_ASSIGNEE_4_LABEL=${JIRA_ASSIGNEE_4_LABEL:-Dev 4}
+      - JIRA_ASSIGNEE_4_NAME=${JIRA_ASSIGNEE_4_NAME:-Dev 4}
+      - JIRA_ASSIGNEE_5_LABEL=${JIRA_ASSIGNEE_5_LABEL:-Dev 5}
+      - JIRA_ASSIGNEE_5_NAME=${JIRA_ASSIGNEE_5_NAME:-Dev 5}
+      - JIRA_ASSIGNEE_6_LABEL=${JIRA_ASSIGNEE_6_LABEL:-Dev 6}
+      - JIRA_ASSIGNEE_6_NAME=${JIRA_ASSIGNEE_6_NAME:-Dev 6}
+      - JIRA_ASSIGNEE_7_LABEL=${JIRA_ASSIGNEE_7_LABEL:-Dev 7}
+      - JIRA_ASSIGNEE_7_NAME=${JIRA_ASSIGNEE_7_NAME:-Dev 7}
+      - JIRA_ASSIGNEE_8_LABEL=${JIRA_ASSIGNEE_8_LABEL:-Dev 8}
+      - JIRA_ASSIGNEE_8_NAME=${JIRA_ASSIGNEE_8_NAME:-Dev 8}
+      - JIRA_ASSIGNEE_9_LABEL=${JIRA_ASSIGNEE_9_LABEL:-Dev 9}
+      - JIRA_ASSIGNEE_9_NAME=${JIRA_ASSIGNEE_9_NAME:-Dev 9}
+      - JIRA_ASSIGNEE_10_LABEL=${JIRA_ASSIGNEE_10_LABEL:-Dev 10}
+      - JIRA_ASSIGNEE_10_NAME=${JIRA_ASSIGNEE_10_NAME:-Dev 10}
+      - JIRA_ASSIGNEE_11_LABEL=${JIRA_ASSIGNEE_11_LABEL:-Dev 11}
+      - JIRA_ASSIGNEE_11_NAME=${JIRA_ASSIGNEE_11_NAME:-Dev 11}
       # Configuração de SMTP e destinatário para alertas por e-mail
       - ALERT_EMAIL_TO=${EMAIL_JIRA}
       - GF_SMTP_ENABLED=true
@@ -64,6 +87,39 @@ services:
       - GF_SMTP_FROM_ADDRESS=${SMTP_FROM_ADDRESS:-alertas@observability-hub.local}
       - GF_SMTP_FROM_NAME=Grafana Observability Hub
       - GF_SMTP_SKIP_VERIFY=true
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        mkdir -p /tmp/dashboards
+        cp /etc/grafana/provisioning/dashboards/*.json /tmp/dashboards/
+        sed -i \
+          -e "s|\$${JIRA_URL}|$${JIRA_URL}|g" \
+          -e "s|\$${JIRA_USER_LABEL}|$${JIRA_USER_LABEL}|g" \
+          -e "s|\$${JIRA_ASSIGNEE_1_LABEL}|$${JIRA_ASSIGNEE_1_LABEL}|g" \
+          -e "s|\$${JIRA_ASSIGNEE_1_NAME}|$${JIRA_ASSIGNEE_1_NAME}|g" \
+          -e "s|\$${JIRA_ASSIGNEE_2_LABEL}|$${JIRA_ASSIGNEE_2_LABEL}|g" \
+          -e "s|\$${JIRA_ASSIGNEE_2_NAME}|$${JIRA_ASSIGNEE_2_NAME}|g" \
+          -e "s|\$${JIRA_ASSIGNEE_3_LABEL}|$${JIRA_ASSIGNEE_3_LABEL}|g" \
+          -e "s|\$${JIRA_ASSIGNEE_3_NAME}|$${JIRA_ASSIGNEE_3_NAME}|g" \
+          -e "s|\$${JIRA_ASSIGNEE_4_LABEL}|$${JIRA_ASSIGNEE_4_LABEL}|g" \
+          -e "s|\$${JIRA_ASSIGNEE_4_NAME}|$${JIRA_ASSIGNEE_4_NAME}|g" \
+          -e "s|\$${JIRA_ASSIGNEE_5_LABEL}|$${JIRA_ASSIGNEE_5_LABEL}|g" \
+          -e "s|\$${JIRA_ASSIGNEE_5_NAME}|$${JIRA_ASSIGNEE_5_NAME}|g" \
+          -e "s|\$${JIRA_ASSIGNEE_6_LABEL}|$${JIRA_ASSIGNEE_6_LABEL}|g" \
+          -e "s|\$${JIRA_ASSIGNEE_6_NAME}|$${JIRA_ASSIGNEE_6_NAME}|g" \
+          -e "s|\$${JIRA_ASSIGNEE_7_LABEL}|$${JIRA_ASSIGNEE_7_LABEL}|g" \
+          -e "s|\$${JIRA_ASSIGNEE_7_NAME}|$${JIRA_ASSIGNEE_7_NAME}|g" \
+          -e "s|\$${JIRA_ASSIGNEE_8_LABEL}|$${JIRA_ASSIGNEE_8_LABEL}|g" \
+          -e "s|\$${JIRA_ASSIGNEE_8_NAME}|$${JIRA_ASSIGNEE_8_NAME}|g" \
+          -e "s|\$${JIRA_ASSIGNEE_9_LABEL}|$${JIRA_ASSIGNEE_9_LABEL}|g" \
+          -e "s|\$${JIRA_ASSIGNEE_9_NAME}|$${JIRA_ASSIGNEE_9_NAME}|g" \
+          -e "s|\$${JIRA_ASSIGNEE_10_LABEL}|$${JIRA_ASSIGNEE_10_LABEL}|g" \
+          -e "s|\$${JIRA_ASSIGNEE_10_NAME}|$${JIRA_ASSIGNEE_10_NAME}|g" \
+          -e "s|\$${JIRA_ASSIGNEE_11_LABEL}|$${JIRA_ASSIGNEE_11_LABEL}|g" \
+          -e "s|\$${JIRA_ASSIGNEE_11_NAME}|$${JIRA_ASSIGNEE_11_NAME}|g" \
+          /tmp/dashboards/jira-dashboard.json
+        exec /run.sh
     volumes:
       - ./grafana/provisioning:/etc/grafana/provisioning
     depends_on:

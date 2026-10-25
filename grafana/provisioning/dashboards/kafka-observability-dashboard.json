@@ -1,0 +1,1268 @@
+{
+  "uid": "kafka-observability-dashboard",
+  "title": "Apache Kafka - Observabilidade Completa (Producer, Consumer, Lag, Rede & Traces)",
+  "description": "Dashboard completo de observabilidade do Apache Kafka e Spring Kafka: Throughput, Consumer Lag por Partição, Latência de Publicação e Processamento, Saúde do Coordinator/Rebalance, Buffer do Producer, Rede/IO, Traces (Tempo) e Logs (Loki).",
+  "tags": ["kafka", "spring-kafka", "prometheus", "opentelemetry", "tempo", "loki"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "editable": true,
+  "refresh": "5s",
+  "time": {
+    "from": "now-30m",
+    "to": "now"
+  },
+  "templating": {
+    "list": [
+      {
+        "name": "application",
+        "label": "Aplicação",
+        "type": "query",
+        "datasource": { "type": "prometheus", "uid": "prometheus" },
+        "query": {
+          "query": "label_values(kafka_app_info_start_time_ms, application)",
+          "refId": "PrometheusVariableQueryEditor-VariableQuery"
+        },
+        "definition": "label_values(kafka_app_info_start_time_ms, application)",
+        "refresh": 2,
+        "sort": 1,
+        "current": {
+          "text": "observability-hub",
+          "value": "observability-hub"
+        }
+      },
+      {
+        "name": "topic",
+        "label": "Tópico",
+        "type": "query",
+        "datasource": { "type": "prometheus", "uid": "prometheus" },
+        "query": {
+          "query": "label_values(kafka_consumer_fetch_manager_records_lag{application=\"$application\"}, topic)",
+          "refId": "PrometheusVariableQueryEditor-VariableQuery"
+        },
+        "definition": "label_values(kafka_consumer_fetch_manager_records_lag{application=\"$application\"}, topic)",
+        "refresh": 2,
+        "sort": 1,
+        "includeAll": true,
+        "multi": true,
+        "allValue": ".*",
+        "current": {
+          "text": "All",
+          "value": ["$__all"]
+        }
+      },
+      {
+        "name": "producer_client",
+        "label": "Producer Client ID",
+        "type": "query",
+        "datasource": { "type": "prometheus", "uid": "prometheus" },
+        "query": {
+          "query": "label_values(kafka_producer_record_send_total{application=\"$application\"}, client_id)",
+          "refId": "PrometheusVariableQueryEditor-VariableQuery"
+        },
+        "definition": "label_values(kafka_producer_record_send_total{application=\"$application\"}, client_id)",
+        "refresh": 2,
+        "sort": 1,
+        "includeAll": true,
+        "multi": true,
+        "allValue": ".*",
+        "current": {
+          "text": "All",
+          "value": ["$__all"]
+        }
+      },
+      {
+        "name": "consumer_client",
+        "label": "Consumer Client ID",
+        "type": "query",
+        "datasource": { "type": "prometheus", "uid": "prometheus" },
+        "query": {
+          "query": "label_values(kafka_consumer_fetch_manager_fetch_total{application=\"$application\"}, client_id)",
+          "refId": "PrometheusVariableQueryEditor-VariableQuery"
+        },
+        "definition": "label_values(kafka_consumer_fetch_manager_fetch_total{application=\"$application\"}, client_id)",
+        "refresh": 2,
+        "sort": 1,
+        "includeAll": true,
+        "multi": true,
+        "allValue": ".*",
+        "current": {
+          "text": "All",
+          "value": ["$__all"]
+        }
+      }
+    ]
+  },
+  "panels": [
+    {
+      "type": "row",
+      "title": "1. Visão Geral & Saúde do Cluster / Clientes Kafka (KPIs)",
+      "collapsed": false,
+      "id": 1,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "panels": []
+    },
+    {
+      "type": "stat",
+      "title": "Mensagens Publicadas (Total)",
+      "description": "Total acumulado de mensagens publicadas pela aplicação (kafka_messages_published_total)",
+      "id": 2,
+      "gridPos": { "h": 4, "w": 3, "x": 0, "y": 1 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "blue", "value": null },
+              { "color": "green", "value": 1 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "colorMode": "background",
+        "graphMode": "area"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(kafka_messages_published_total{application=\"$application\"}) or vector(0)",
+          "legendFormat": "Publicadas"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Mensagens Consumidas (Total)",
+      "description": "Total acumulado de mensagens consumidas pela aplicação (kafka_messages_consumed_total)",
+      "id": 3,
+      "gridPos": { "h": 4, "w": 3, "x": 3, "y": 1 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "blue", "value": null },
+              { "color": "green", "value": 1 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "colorMode": "background",
+        "graphMode": "area"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(kafka_messages_consumed_total{application=\"$application\"}) or vector(0)",
+          "legendFormat": "Consumidas"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Consumer Lag Total",
+      "description": "Soma do lag atual de todas as partições monitoradas (kafka_consumer_fetch_manager_records_lag)",
+      "id": 4,
+      "gridPos": { "h": 4, "w": 3, "x": 6, "y": 1 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "orange", "value": 10 },
+              { "color": "red", "value": 100 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "colorMode": "background",
+        "graphMode": "area"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(kafka_consumer_fetch_manager_records_lag{application=\"$application\", topic=~\"$topic\", client_id=~\"$consumer_client\"}) or vector(0)",
+          "legendFormat": "Lag Total"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Erros de Publicação (Producer)",
+      "description": "Total de falhas de envio no Kafka Producer e KafkaTemplate",
+      "id": 5,
+      "gridPos": { "h": 4, "w": 3, "x": 9, "y": 1 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "red", "value": 1 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "colorMode": "background",
+        "graphMode": "area"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "(sum(kafka_producer_record_error_total{application=\"$application\", client_id=~\"$producer_client\"}) or vector(0)) + (sum(spring_kafka_template_seconds_count{application=\"$application\", error!=\"none\"}) or vector(0))",
+          "legendFormat": "Erros Producer"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Erros no Consumer (@KafkaListener)",
+      "description": "Total de falhas durante o processamento de mensagens nos listeners Spring Kafka",
+      "id": 6,
+      "gridPos": { "h": 4, "w": 3, "x": 12, "y": 1 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "red", "value": 1 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "colorMode": "background",
+        "graphMode": "area"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(spring_kafka_listener_seconds_count{application=\"$application\", error!=\"none\"}) or vector(0)",
+          "legendFormat": "Erros Consumer"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Partições Atribuídas",
+      "description": "Total de partições atualmente atribuídas aos consumidores ativos",
+      "id": 7,
+      "gridPos": { "h": 4, "w": 3, "x": 15, "y": 1 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "green", "value": 1 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "colorMode": "background",
+        "graphMode": "none"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(kafka_consumer_coordinator_assigned_partitions{application=\"$application\", client_id=~\"$consumer_client\"}) or vector(0)",
+          "legendFormat": "Partições"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Conexões Ativas (Prod + Cons)",
+      "description": "Soma das conexões TCP ativas do Producer e dos Consumers com os brokers Kafka",
+      "id": 8,
+      "gridPos": { "h": 4, "w": 3, "x": 18, "y": 1 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "green", "value": 1 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "colorMode": "value",
+        "graphMode": "area"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "(sum(kafka_producer_connection_count{application=\"$application\", client_id=~\"$producer_client\"}) or vector(0)) + (sum(kafka_consumer_connection_count{application=\"$application\", client_id=~\"$consumer_client\"}) or vector(0))",
+          "legendFormat": "Conexões"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Uptime do Cliente Kafka",
+      "description": "Tempo desde a inicialização do cliente Kafka na aplicação",
+      "id": 9,
+      "gridPos": { "h": 4, "w": 3, "x": 21, "y": 1 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "decimals": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "purple", "value": null }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "colorMode": "value",
+        "graphMode": "none"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "time() - (min(kafka_app_info_start_time_ms{application=\"$application\"}) / 1000)",
+          "legendFormat": "Uptime"
+        }
+      ]
+    },
+    {
+      "type": "row",
+      "title": "2. Fluxo de Mensagens & Spring Kafka (KafkaTemplate, @KafkaListener & HTTP /kafka)",
+      "collapsed": false,
+      "id": 10,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 5 },
+      "panels": []
+    },
+    {
+      "type": "timeseries",
+      "title": "Throughput da Aplicação: Publicadas vs. Consumidas (msg/s)",
+      "description": "Taxa de mensagens publicadas e consumidas por segundo na aplicação",
+      "id": 11,
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 6 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "custom": { "fillOpacity": 20, "lineWidth": 2 }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["mean", "max", "lastNotNull"] },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(rate(kafka_messages_published_total{application=\"$application\"}[$__rate_interval]))",
+          "legendFormat": "Publicadas (App msg/s)"
+        },
+        {
+          "refId": "B",
+          "expr": "sum(rate(kafka_messages_consumed_total{application=\"$application\"}[$__rate_interval]))",
+          "legendFormat": "Consumidas (App msg/s)"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Volume Acumulado por Tópico (Enviadas vs. Consumidas)",
+      "description": "Total de registros enviados pelo Producer e consumidos pelo Fetch Manager separados por tópico",
+      "id": 12,
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 6 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": { "fillOpacity": 15, "lineWidth": 2 }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["lastNotNull", "max"] },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (topic) (kafka_producer_topic_record_send_total{application=\"$application\", topic=~\"$topic\", client_id=~\"$producer_client\"})",
+          "legendFormat": "Produzidas [{{topic}}]"
+        },
+        {
+          "refId": "B",
+          "expr": "sum by (topic) (kafka_consumer_fetch_manager_records_consumed_total{application=\"$application\", topic=~\"$topic\", client_id=~\"$consumer_client\"})",
+          "legendFormat": "Consumidas [{{topic}}]"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Endpoints HTTP /kafka/* — Taxa de Requisições & Latência Média",
+      "description": "Monitoramento dos endpoints REST /kafka/publish e /kafka/consumed",
+      "id": 13,
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 6 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "custom": { "fillOpacity": 15, "lineWidth": 2 }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byRegexp", "options": "Latência.*" },
+            "properties": [
+              { "id": "unit", "value": "s" },
+              { "id": "custom.axisPlacement", "value": "right" }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["mean", "max"] },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (uri, status) (rate(http_server_requests_seconds_count{application=\"$application\", uri=~\"/kafka.*\"}[$__rate_interval]))",
+          "legendFormat": "{{uri}} [HTTP {{status}}] (req/s)"
+        },
+        {
+          "refId": "B",
+          "expr": "sum by (uri) (rate(http_server_requests_seconds_sum{application=\"$application\", uri=~\"/kafka.*\"}[$__rate_interval])) / clamp_min(sum by (uri) (rate(http_server_requests_seconds_count{application=\"$application\", uri=~\"/kafka.*\"}[$__rate_interval])), 1e-9)",
+          "legendFormat": "Latência Média {{uri}}"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Latência de Publicação — Spring KafkaTemplate (Média & Máxima por Tópico)",
+      "description": "Tempo gasto pelo KafkaTemplate para publicar eventos em cada tópico (spring_kafka_template_seconds)",
+      "id": 14,
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 14 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": { "fillOpacity": 15, "lineWidth": 2 }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["mean", "max", "lastNotNull"] },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (messaging_destination_name) (rate(spring_kafka_template_seconds_sum{application=\"$application\", messaging_destination_name=~\"$topic\"}[$__rate_interval])) / clamp_min(sum by (messaging_destination_name) (rate(spring_kafka_template_seconds_count{application=\"$application\", messaging_destination_name=~\"$topic\"}[$__rate_interval])), 1e-9)",
+          "legendFormat": "Média Publish [{{messaging_destination_name}}]"
+        },
+        {
+          "refId": "B",
+          "expr": "max by (messaging_destination_name) (spring_kafka_template_seconds_max{application=\"$application\", messaging_destination_name=~\"$topic\"})",
+          "legendFormat": "Pico (Max) Publish [{{messaging_destination_name}}]"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Latência de Processamento — Spring @KafkaListener (Média & Máxima por Tópico)",
+      "description": "Tempo gasto pelos métodos @KafkaListener para processar cada mensagem consumida (spring_kafka_listener_seconds)",
+      "id": 15,
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 14 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": { "fillOpacity": 15, "lineWidth": 2 }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["mean", "max", "lastNotNull"] },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (messaging_source_name, messaging_kafka_consumer_group) (rate(spring_kafka_listener_seconds_sum{application=\"$application\", messaging_source_name=~\"$topic\"}[$__rate_interval])) / clamp_min(sum by (messaging_source_name, messaging_kafka_consumer_group) (rate(spring_kafka_listener_seconds_count{application=\"$application\", messaging_source_name=~\"$topic\"}[$__rate_interval])), 1e-9)",
+          "legendFormat": "Média Listener [{{messaging_source_name}} | {{messaging_kafka_consumer_group}}]"
+        },
+        {
+          "refId": "B",
+          "expr": "max by (messaging_source_name, messaging_kafka_consumer_group) (spring_kafka_listener_seconds_max{application=\"$application\", messaging_source_name=~\"$topic\"})",
+          "legendFormat": "Pico (Max) Listener [{{messaging_source_name}} | {{messaging_kafka_consumer_group}}]"
+        }
+      ]
+    },
+    {
+      "type": "row",
+      "title": "3. Consumer Lag, Partições & Fetch Manager (Detalhamento por Tópico e Partição)",
+      "collapsed": false,
+      "id": 20,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 22 },
+      "panels": []
+    },
+    {
+      "type": "timeseries",
+      "title": "Consumer Lag por Tópico e Partição (records_lag)",
+      "description": "Quantidade de mensagens pendentes de leitura por partição em cada tópico. Valores crescentes indicam gargalo no consumidor.",
+      "id": 21,
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 23 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": { "fillOpacity": 20, "lineWidth": 2 }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["lastNotNull", "max"] },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "kafka_consumer_fetch_manager_records_lag{application=\"$application\", topic=~\"$topic\", client_id=~\"$consumer_client\"}",
+          "legendFormat": "{{topic}} [partição {{partition}}] ({{client_id}})"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Consumer Lead por Tópico e Partição (records_lead)",
+      "description": "Diferença entre o offset atual do consumidor e o menor offset disponível na partição (log start offset)",
+      "id": 22,
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 23 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": { "fillOpacity": 15, "lineWidth": 2 }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["lastNotNull", "max"] },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "kafka_consumer_fetch_manager_records_lead{application=\"$application\", topic=~\"$topic\", client_id=~\"$consumer_client\"}",
+          "legendFormat": "{{topic}} [partição {{partition}}]"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Latência de Fetch Requests do Consumer (Média vs. Máxima)",
+      "description": "Tempo que o Fetch Manager leva para buscar lotes de registros nos brokers Kafka",
+      "id": 23,
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 23 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms",
+          "custom": { "fillOpacity": 15, "lineWidth": 2 }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["mean", "max", "lastNotNull"] },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "kafka_consumer_fetch_manager_fetch_latency_avg{application=\"$application\", client_id=~\"$consumer_client\"}",
+          "legendFormat": "Média Fetch ({{client_id}})"
+        },
+        {
+          "refId": "B",
+          "expr": "kafka_consumer_fetch_manager_fetch_latency_max{application=\"$application\", client_id=~\"$consumer_client\"}",
+          "legendFormat": "Máx Fetch ({{client_id}})"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Taxa de Consumo por Tópico (Registros/s & Bytes/s)",
+      "description": "Velocidade de leitura dos tópicos pelo Fetch Manager",
+      "id": 24,
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 31 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "custom": { "fillOpacity": 15, "lineWidth": 2 }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byRegexp", "options": "Bytes/s.*" },
+            "properties": [
+              { "id": "unit", "value": "Bps" },
+              { "id": "custom.axisPlacement", "value": "right" }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["mean", "max", "lastNotNull"] },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (topic) (rate(kafka_consumer_fetch_manager_records_consumed_total{application=\"$application\", topic=~\"$topic\", client_id=~\"$consumer_client\"}[$__rate_interval]))",
+          "legendFormat": "Registros/s [{{topic}}]"
+        },
+        {
+          "refId": "B",
+          "expr": "sum by (topic) (rate(kafka_consumer_fetch_manager_bytes_consumed_total{application=\"$application\", topic=~\"$topic\", client_id=~\"$consumer_client\"}[$__rate_interval]))",
+          "legendFormat": "Bytes/s [{{topic}}]"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Taxa de Fetch Requests/s & Tempo de Throttling",
+      "description": "Frequência de chamadas Fetch ao broker e eventual throttling aplicado pelo cluster",
+      "id": 25,
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 31 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "custom": { "fillOpacity": 15, "lineWidth": 2 }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byRegexp", "options": "Throttle.*" },
+            "properties": [
+              { "id": "unit", "value": "ms" },
+              { "id": "custom.axisPlacement", "value": "right" }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["mean", "max", "lastNotNull"] },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "kafka_consumer_fetch_manager_fetch_rate{application=\"$application\", client_id=~\"$consumer_client\"}",
+          "legendFormat": "Fetch Rate ({{client_id}})"
+        },
+        {
+          "refId": "B",
+          "expr": "kafka_consumer_fetch_manager_fetch_throttle_time_max{application=\"$application\", client_id=~\"$consumer_client\"}",
+          "legendFormat": "Throttle Máx ({{client_id}})"
+        }
+      ]
+    },
+    {
+      "type": "row",
+      "title": "4. Kafka Producer — Throughput por Tópico, Buffer Pool, Retries & In-Flight Requests",
+      "collapsed": false,
+      "id": 30,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 39 },
+      "panels": []
+    },
+    {
+      "type": "timeseries",
+      "title": "Taxa de Envio do Producer por Tópico (Registros/s & Bytes/s)",
+      "description": "Taxa de registros e volume em bytes enviados para cada tópico pelo Kafka Producer",
+      "id": 31,
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 40 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "custom": { "fillOpacity": 15, "lineWidth": 2 }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byRegexp", "options": "Bytes/s.*" },
+            "properties": [
+              { "id": "unit", "value": "Bps" },
+              { "id": "custom.axisPlacement", "value": "right" }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["mean", "max", "lastNotNull"] },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (topic) (rate(kafka_producer_topic_record_send_total{application=\"$application\", topic=~\"$topic\", client_id=~\"$producer_client\"}[$__rate_interval]))",
+          "legendFormat": "Registros/s [{{topic}}]"
+        },
+        {
+          "refId": "B",
+          "expr": "sum by (topic) (rate(kafka_producer_topic_byte_total{application=\"$application\", topic=~\"$topic\", client_id=~\"$producer_client\"}[$__rate_interval]))",
+          "legendFormat": "Bytes/s [{{topic}}]"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Memória do Buffer do Producer (Disponível vs. Capacidade Total)",
+      "description": "Monitoramento da memória de buffer do Producer (padrão 32MB). Se disponível cair para perto de zero, threads produtoras serão bloqueadas.",
+      "id": 32,
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 40 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "custom": { "fillOpacity": 15, "lineWidth": 2 }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["min", "lastNotNull"] },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "kafka_producer_buffer_available_bytes{application=\"$application\", client_id=~\"$producer_client\"}",
+          "legendFormat": "Buffer Disponível ({{client_id}})"
+        },
+        {
+          "refId": "B",
+          "expr": "kafka_producer_buffer_total_bytes{application=\"$application\", client_id=~\"$producer_client\"}",
+          "legendFormat": "Buffer Total ({{client_id}})"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Confiabilidade do Producer: Erros, Retries, Batch Splits & Buffer Exhausted",
+      "description": "Indicadores de falhas, retentativas de envio e exaustão de buffer no Producer",
+      "id": 33,
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 40 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": { "fillOpacity": 15, "lineWidth": 2 }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["lastNotNull", "max"] },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (topic) (kafka_producer_topic_record_error_total{application=\"$application\", topic=~\"$topic\", client_id=~\"$producer_client\"})",
+          "legendFormat": "Erros Acumulados [{{topic}}]"
+        },
+        {
+          "refId": "B",
+          "expr": "sum by (topic) (kafka_producer_topic_record_retry_total{application=\"$application\", topic=~\"$topic\", client_id=~\"$producer_client\"})",
+          "legendFormat": "Retries Acumulados [{{topic}}]"
+        },
+        {
+          "refId": "C",
+          "expr": "sum by (client_id) (kafka_producer_batch_split_total{application=\"$application\", client_id=~\"$producer_client\"})",
+          "legendFormat": "Batch Splits ({{client_id}})"
+        },
+        {
+          "refId": "D",
+          "expr": "sum by (client_id) (kafka_producer_buffer_exhausted_total{application=\"$application\", client_id=~\"$producer_client\"})",
+          "legendFormat": "Buffer Exhausted ({{client_id}})"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Producer: Requests In-Flight & Threads Aguardando Buffer",
+      "description": "Requisições aguardando resposta do broker (in-flight) e threads da aplicação bloqueadas aguardando memória de buffer",
+      "id": 34,
+      "gridPos": { "h": 7, "w": 12, "x": 0, "y": 48 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": { "fillOpacity": 15, "lineWidth": 2 }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["mean", "max", "lastNotNull"] },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "kafka_producer_requests_in_flight{application=\"$application\", client_id=~\"$producer_client\"}",
+          "legendFormat": "Requests In-Flight ({{client_id}})"
+        },
+        {
+          "refId": "B",
+          "expr": "kafka_producer_waiting_threads{application=\"$application\", client_id=~\"$producer_client\"}",
+          "legendFormat": "Waiting Threads ({{client_id}})"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Producer: Idade do Metadata & Tempo de Espera por Metadata",
+      "description": "Idade do cache de metadados do cluster (segundos) e tempo total gasto aguardando atualização de metadata",
+      "id": 35,
+      "gridPos": { "h": 7, "w": 12, "x": 12, "y": 48 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": { "fillOpacity": 15, "lineWidth": 2 }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byRegexp", "options": "Espera Metadata.*" },
+            "properties": [
+              { "id": "unit", "value": "ms" },
+              { "id": "custom.axisPlacement", "value": "right" }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["mean", "max", "lastNotNull"] },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "kafka_producer_metadata_age{application=\"$application\", client_id=~\"$producer_client\"}",
+          "legendFormat": "Idade Metadata ({{client_id}})"
+        },
+        {
+          "refId": "B",
+          "expr": "kafka_producer_metadata_wait_time_ns_total{application=\"$application\", client_id=~\"$producer_client\"} / 1e6",
+          "legendFormat": "Espera Metadata Acumulada ({{client_id}})"
+        }
+      ]
+    },
+    {
+      "type": "row",
+      "title": "5. Consumer Coordinator — Rebalanceamento, Heartbeats, Commits & Saúde do Poll",
+      "collapsed": false,
+      "id": 40,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 55 },
+      "panels": []
+    },
+    {
+      "type": "timeseries",
+      "title": "Rebalanceamentos do Consumer Group (Sucesso, Falha & Taxa/Hora)",
+      "description": "Eventos de rebalanceamento de partições no grupo de consumidores. Rebalanceamentos frequentes pausam o consumo.",
+      "id": 41,
+      "gridPos": { "h": 8, "w": 6, "x": 0, "y": 56 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": { "fillOpacity": 15, "lineWidth": 2 }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["lastNotNull", "max"] },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "kafka_consumer_coordinator_rebalance_total{application=\"$application\", client_id=~\"$consumer_client\"}",
+          "legendFormat": "Rebalances OK ({{client_id}})"
+        },
+        {
+          "refId": "B",
+          "expr": "kafka_consumer_coordinator_failed_rebalance_total{application=\"$application\", client_id=~\"$consumer_client\"}",
+          "legendFormat": "Rebalances Falhos ({{client_id}})"
+        },
+        {
+          "refId": "C",
+          "expr": "kafka_consumer_coordinator_rebalance_rate_per_hour{application=\"$application\", client_id=~\"$consumer_client\"}",
+          "legendFormat": "Taxa/hora ({{client_id}})"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Commits de Offset (Total Acumulado & Tempo em CommitSync)",
+      "description": "Quantidade de commits de offset realizados pelo consumidor e tempo gasto em commitSync (ms)",
+      "id": 42,
+      "gridPos": { "h": 8, "w": 6, "x": 6, "y": 56 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": { "fillOpacity": 15, "lineWidth": 2 }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byRegexp", "options": "Tempo CommitSync.*" },
+            "properties": [
+              { "id": "unit", "value": "ms" },
+              { "id": "custom.axisPlacement", "value": "right" }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["lastNotNull", "max"] },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "kafka_consumer_coordinator_commit_total{application=\"$application\", client_id=~\"$consumer_client\"}",
+          "legendFormat": "Commits Total ({{client_id}})"
+        },
+        {
+          "refId": "B",
+          "expr": "kafka_consumer_commit_sync_time_ns_total{application=\"$application\", client_id=~\"$consumer_client\"} / 1e6",
+          "legendFormat": "Tempo CommitSync ({{client_id}})"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Saúde do Polling (Intervalo entre Polls & Idle Ratio)",
+      "description": "Intervalo médio e máximo entre chamadas poll() em ms. Se ultrapassar max.poll.interval.ms, o consumidor sofre rebalance.",
+      "id": 43,
+      "gridPos": { "h": 8, "w": 6, "x": 12, "y": 56 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms",
+          "custom": { "fillOpacity": 15, "lineWidth": 2 }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byRegexp", "options": "Idle Ratio.*" },
+            "properties": [
+              { "id": "unit", "value": "percentunit" },
+              { "id": "custom.axisPlacement", "value": "right" }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["mean", "max", "lastNotNull"] },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "kafka_consumer_time_between_poll_avg{application=\"$application\", client_id=~\"$consumer_client\"}",
+          "legendFormat": "Poll Delay Médio ({{client_id}})"
+        },
+        {
+          "refId": "B",
+          "expr": "kafka_consumer_time_between_poll_max{application=\"$application\", client_id=~\"$consumer_client\"}",
+          "legendFormat": "Poll Delay Máx ({{client_id}})"
+        },
+        {
+          "refId": "C",
+          "expr": "kafka_consumer_poll_idle_ratio_avg{application=\"$application\", client_id=~\"$consumer_client\"}",
+          "legendFormat": "Idle Ratio ({{client_id}})"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Heartbeats do Coordinator (Taxa/s, Latência Máx & Último Envio)",
+      "description": "Monitoramento dos heartbeats enviados pelos consumidores ao Group Coordinator",
+      "id": 44,
+      "gridPos": { "h": 8, "w": 6, "x": 18, "y": 56 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": { "fillOpacity": 15, "lineWidth": 2 }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byRegexp", "options": "Resp Máx.*" },
+            "properties": [
+              { "id": "unit", "value": "ms" },
+              { "id": "custom.axisPlacement", "value": "right" }
+            ]
+          },
+          {
+            "matcher": { "id": "byRegexp", "options": "Último Heartbeat.*" },
+            "properties": [
+              { "id": "unit", "value": "s" }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["mean", "max", "lastNotNull"] },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "kafka_consumer_coordinator_heartbeat_rate{application=\"$application\", client_id=~\"$consumer_client\"}",
+          "legendFormat": "Heartbeats/s ({{client_id}})"
+        },
+        {
+          "refId": "B",
+          "expr": "kafka_consumer_coordinator_heartbeat_response_time_max{application=\"$application\", client_id=~\"$consumer_client\"}",
+          "legendFormat": "Resp Máx ({{client_id}})"
+        },
+        {
+          "refId": "C",
+          "expr": "kafka_consumer_coordinator_last_heartbeat_seconds_ago{application=\"$application\", client_id=~\"$consumer_client\"}",
+          "legendFormat": "Último Heartbeat ({{client_id}})"
+        }
+      ]
+    },
+    {
+      "type": "row",
+      "title": "6. Rede, Tráfego de Bytes & Threads de I/O (Producer & Consumer)",
+      "collapsed": false,
+      "id": 50,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 64 },
+      "panels": []
+    },
+    {
+      "type": "timeseries",
+      "title": "Tráfego de Rede (Incoming vs. Outgoing Bytes/s)",
+      "description": "Taxa de bytes enviados e recebidos pelos sockets de rede do Producer e dos Consumers",
+      "id": 51,
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 65 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "Bps",
+          "custom": { "fillOpacity": 15, "lineWidth": 2 }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["mean", "max", "lastNotNull"] },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "kafka_producer_outgoing_byte_rate{application=\"$application\", client_id=~\"$producer_client\"}",
+          "legendFormat": "Producer Out ({{client_id}})"
+        },
+        {
+          "refId": "B",
+          "expr": "kafka_producer_incoming_byte_rate{application=\"$application\", client_id=~\"$producer_client\"}",
+          "legendFormat": "Producer In ({{client_id}})"
+        },
+        {
+          "refId": "C",
+          "expr": "kafka_consumer_outgoing_byte_rate{application=\"$application\", client_id=~\"$consumer_client\"}",
+          "legendFormat": "Consumer Out ({{client_id}})"
+        },
+        {
+          "refId": "D",
+          "expr": "kafka_consumer_incoming_byte_rate{application=\"$application\", client_id=~\"$consumer_client\"}",
+          "legendFormat": "Consumer In ({{client_id}})"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Taxa de Requisições ao Broker por Nó (Requests/s)",
+      "description": "Frequência de requests enviados a cada nó do cluster Kafka pelo Producer e pelos Consumers",
+      "id": 52,
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 65 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "custom": { "fillOpacity": 15, "lineWidth": 2 }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["mean", "max", "lastNotNull"] },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "kafka_producer_request_rate{application=\"$application\", client_id=~\"$producer_client\"}",
+          "legendFormat": "Producer Req/s ({{client_id}})"
+        },
+        {
+          "refId": "B",
+          "expr": "kafka_consumer_request_rate{application=\"$application\", client_id=~\"$consumer_client\"}",
+          "legendFormat": "Consumer Req/s ({{client_id}})"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Ocupação da Thread de Rede: I/O Ratio vs. I/O Wait Ratio",
+      "description": "Fração de tempo que a thread de rede passa executando I/O ativo vs. aguardando socket pronto",
+      "id": 53,
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 65 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "custom": { "fillOpacity": 15, "lineWidth": 2 }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["mean", "max", "lastNotNull"] },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "kafka_producer_io_ratio{application=\"$application\", client_id=~\"$producer_client\"}",
+          "legendFormat": "I/O Ativo Producer ({{client_id}})"
+        },
+        {
+          "refId": "B",
+          "expr": "kafka_consumer_io_ratio{application=\"$application\", client_id=~\"$consumer_client\"}",
+          "legendFormat": "I/O Ativo Consumer ({{client_id}})"
+        },
+        {
+          "refId": "C",
+          "expr": "kafka_consumer_io_wait_ratio{application=\"$application\", client_id=~\"$consumer_client\"}",
+          "legendFormat": "I/O Wait Consumer ({{client_id}})"
+        }
+      ]
+    },
+    {
+      "type": "row",
+      "title": "7. Rastreamento Distribuído (Grafana Tempo) & Logs do Kafka (Grafana Loki)",
+      "collapsed": false,
+      "id": 60,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 73 },
+      "panels": []
+    },
+    {
+      "type": "table",
+      "title": "Spans OpenTelemetry de Mensageria Kafka (Grafana Tempo)",
+      "description": "Spans de publicação (publish) e processamento (process) gerados pelo Spring Kafka e instrumentação OpenTelemetry",
+      "id": 61,
+      "gridPos": { "h": 9, "w": 10, "x": 0, "y": 74 },
+      "datasource": { "type": "tempo", "uid": "tempo" },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": { "type": "auto" },
+            "inspect": false,
+            "filterable": true
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "tempo", "uid": "tempo" },
+          "queryType": "traceql",
+          "query": "{ span.messaging.system = \"kafka\" || name =~ \".*publish.*\" || name =~ \".*process.*\" || name =~ \".*kafka.*\" }",
+          "limit": 50,
+          "tableType": "spans"
+        }
+      ]
+    },
+    {
+      "type": "logs",
+      "title": "Logs de Publicação e Consumo do Kafka Correlacionados com Trace ID (Grafana Loki)",
+      "description": "Logs emitidos pelo KafkaProducerService, KafkaConsumerService e KafkaController com link direto para o Trace no Tempo",
+      "id": 62,
+      "gridPos": { "h": 9, "w": 14, "x": 10, "y": 74 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "options": {
+        "showTime": true,
+        "showLabels": false,
+        "showCommonLabels": false,
+        "wrapLogMessage": true,
+        "prettifyLogMessage": false,
+        "enableLogDetails": true,
+        "dedupStrategy": "none",
+        "sortOrder": "Descending"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "loki", "uid": "loki" },
+          "expr": "{service_name=~\".+\"} |~ \"(?i)(kafka|tópico|topic|consumer|producer|partição|evento)\" | line_format \"[trace_id={{.trace_id}} | span_id={{.span_id}}] {{__line__}}\"",
+          "queryType": "range",
+          "maxLines": 200
+        }
+      ]
+    }
+  ]
+}
