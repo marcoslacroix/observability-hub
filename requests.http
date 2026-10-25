@@ -12,8 +12,8 @@ POST http://localhost:8080/micrometer/register-user
 Content-Type: application/json
 
 {
-  "name": "",
-  "email": ""
+  "name": "teste",
+  "email": "teste@gmail.com"
 }
 
 ### 3. Executar Cálculo Pesado de Impostos (Timer -> business_tax_calculation_time_seconds)
