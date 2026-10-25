@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @RequestMapping("/micrometer")
@@ -40,6 +41,12 @@ public class MicrometerController {
         TaxResult result = micrometerService.calculateComplexTaxesAlternative();
         log.info("Calculo concluido: {}", result);
         return ResponseEntity.ok(result);
+    }
+
+    @GetMapping("/simulate-5xx")
+    public ResponseEntity<Map<String, String>> simulate5xxError() {
+        log.error("Simulando erro HTTP 500 (Internal Server Error) para teste de alerta no Grafana");
+        throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Erro interno simulado (HTTP 500)");
     }
 
 }
