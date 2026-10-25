@@ -1,4 +1,4 @@
-package com.example.observability;
+package com.example.observability.controller;
 
 import java.util.ArrayList;
 import java.util.HashMap;

@@ -48,6 +48,12 @@
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
 
+        <!-- Dependência principal do Micrometer Core (para Counter, MeterRegistry, etc.) -->
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-core</artifactId>
+        </dependency>
+
         <!-- OpenTelemetry (tracing via Micrometer + exportador OTLP para o Grafana Tempo).
              No Spring Boot 4 a auto-configuração fica no starter; só as libs não ativam o tracing. -->
         <dependency>

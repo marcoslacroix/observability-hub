@@ -1,0 +1,33 @@
+### 1. Registar Utilizador (Sucesso -> incrementa user_registrations_total{status="success"})
+POST http://localhost:8080/micrometer/register-user
+Content-Type: application/json
+
+{
+  "name": "Marcos Lacroix",
+  "email": "marcos@example.com"
+}
+
+### 2. Registar Utilizador Inválido (Falha -> incrementa user_registrations_total{status="failure"})
+POST http://localhost:8080/micrometer/register-user
+Content-Type: application/json
+
+{
+  "name": "",
+  "email": ""
+}
+
+### 3. Executar Cálculo Pesado de Impostos (Timer -> business_tax_calculation_time_seconds)
+GET http://localhost:8080/micrometer/heavy-calculations
+Accept: application/json
+
+### 4. Alocar Blocos de Bytes na Memória (10 MB)
+GET http://localhost:8080/alloc/bytes?mb=10
+Accept: application/json
+
+### 5. Alocar Objetos no HashMap (Pressão no GC)
+GET http://localhost:8080/alloc/objects?items=200000
+Accept: application/json
+
+### 6. Consultar Métricas Expostas no Prometheus (Actuator)
+GET http://localhost:8080/actuator/prometheus
+Accept: text/plain
