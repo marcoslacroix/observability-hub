@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 
+import com.example.observability.service.LeakService;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -24,6 +25,12 @@ public class AllocationController {
 
 	private static final int MAX_MB = 100;
 	private static final int MAX_ITEMS = 1_000_000;
+
+	private final LeakService leakService;
+
+	public AllocationController(LeakService leakService) {
+		this.leakService = leakService;
+	}
 
 	/**
 	 * Aloca blocos de 1 MB de byte[] até somar o total pedido.
@@ -57,6 +64,20 @@ public class AllocationController {
 		}
 		log.info("Criacao de objetos concluida: {} itens inseridos", map.size());
 		return Map.of("items", map.size());
+	}
+
+	/**
+	 * Memory leak proposital: retem ~10 KB por entrada (padrao 1000 = ~10 MB por chamada).
+	 */
+	@GetMapping("/leak")
+	public Map<String, Object> leak(@RequestParam(defaultValue = "1000") int entries) {
+		validate(entries, 100_000, "entries");
+		return Map.of("retainedEntries", leakService.leak(entries));
+	}
+
+	@GetMapping("/leak/clear")
+	public Map<String, Object> clearLeak() {
+		return Map.of("removed", leakService.clear());
 	}
 
 	private static void validate(int value, int max, String name) {

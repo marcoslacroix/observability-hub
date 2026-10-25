@@ -16,6 +16,22 @@ contactPoints:
             A taxa de respostas HTTP 5xx nos últimos 5 minutos ultrapassou o limite de 2%.
             Verifique o dashboard no Grafana (http://localhost:3000) e os traces/logs no Tempo e Loki.
 
+  - orgId: 1
+    name: email-heap
+    receivers:
+      - uid: email_receiver_heap
+        type: email
+        disableResolveMessage: false
+        settings:
+          addresses: ${ALERT_EMAIL_TO}
+          singleEmail: true
+          subject: "[ALERTA Grafana] Heap da JVM acima de 85% - observability-hub"
+          message: |
+            Alerta disparado no Observability Hub:
+            O uso de heap da JVM ultrapassou 85% do maximo (-Xmx) por mais de 2 minutos.
+            Risco de OutOfMemoryError. Verifique possiveis memory leaks no flame graph de
+            alocacao do Pyroscope (http://localhost:3000/d/pyroscope-overview) e as metricas JVM.
+
 policies:
   - orgId: 1
     receiver: email-alertas
@@ -26,6 +42,12 @@ policies:
     group_interval: 1m
     repeat_interval: 1h
     routes:
+      - receiver: email-heap
+        object_matchers:
+          - ["alert_type", "=", "heap"]
+        group_wait: 10s
+        group_interval: 1m
+        repeat_interval: 30m
       - receiver: email-alertas
         object_matchers:
           - ["severity", "=", "critical"]
@@ -106,6 +128,81 @@ groups:
                     type: gt
                     params:
                       - 2
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - C
+                  reducer:
+                    type: last
+
+  - orgId: 1
+    name: jvm-heap-alerts
+    folder: Alertas Spring Boot
+    interval: 30s
+    rules:
+      - uid: jvm_heap_above_85pct
+        title: "Heap da JVM > 85%"
+        condition: C
+        for: 2m
+        noDataState: OK
+        execErrState: Error
+        annotations:
+          summary: "Heap da JVM acima de 85% do maximo"
+          description: "O heap do observability-hub esta acima de 85% do -Xmx ha mais de 2 minutos. Possivel memory leak."
+        labels:
+          severity: warning
+          alert_type: heap
+          application: observability-hub
+        data:
+          # A: % de heap usado (soma dos pools / soma dos maximos validos; Eden e Survivor tem max=-1)
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: prometheus
+            model:
+              refId: A
+              editorMode: code
+              expr: >-
+                sum(jvm_memory_used_bytes{application="observability-hub", area="heap"})
+                /
+                sum(jvm_memory_max_bytes{application="observability-hub", area="heap"} > 0) * 100
+              instant: true
+              range: false
+              intervalMs: 1000
+              maxDataPoints: 43200
+
+          # B: Reduz a serie para o ultimo valor
+          - refId: B
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: __expr__
+            model:
+              refId: B
+              type: reduce
+              expression: A
+              reducer: last
+              settings:
+                mode: replaceNN
+                replaceWithValue: 0
+
+          # C: Condicao de disparo (> 85%)
+          - refId: C
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: __expr__
+            model:
+              refId: C
+              type: threshold
+              expression: B
+              conditions:
+                - evaluator:
+                    type: gt
+                    params:
+                      - 85
                   operator:
                     type: and
                   query:
