@@ -146,3 +146,12 @@ Ao desenvolver novos recursos na plataforma, siga estas diretrizes:
 - [ ] **Utilizar o `PiiMasker` para campos sensíveis**: Sempre que for necessário registrar um e-mail ou nome para fins de troubleshooting, aplique o método correspondente.
 - [ ] **Nunca comitar segredos**: Nunca incluir tokens, senhas ou URLs internas da empresa em branches do Git; use variáveis de ambiente.
 - [ ] **Validar endpoints de teste/debug**: Garantir que endpoints criados para suporte a testes não exponham dados sensíveis quando chamados em rede.
+
+---
+
+## 7. Automação de Segurança (DevSecOps) & Shift-Left
+
+Para garantir que as políticas de mascaramento e gestão de segredos sejam cumpridas automaticamente antes de qualquer código ser integrado à branch principal, o projeto implementa uma esteira de proteção em dupla camada com **Pre-Commit Hooks**, regras Semgrep customizadas (`.semgrep/lgpd-rules.yml`) e pipeline no GitHub Actions.
+
+Para detalhes completos sobre a arquitetura dos hooks, resolução de desafios no Windows e validação em CI/CD, consulte o estudo dedicado:
+👉 [**Estudo de Caso: DevSecOps Shift-Left — Pre-Commit Hooks, Semgrep LGPD & CI/CD**](./devsecops-precommit-lgpd-ci-cd.md).

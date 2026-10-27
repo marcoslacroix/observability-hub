@@ -309,3 +309,5 @@ O repositório inclui estudos aprofundados com análises empíricas, fundamenta�
    - Benchmark comparativo sob teste de estresse k6 avaliando RPS, latência, footprint de memória, comportamento sob I/O bloqueante no Kafka e unpinning de threads na JVM.
 2. [**Estudo de Caso & Guia: Gestão de Segredos, Privacy by Design e Conformidade LGPD**](./docs/seguranca-lgpd-e-gestao-de-segredos.md)
    - Análise de riscos de vazamento em observabilidade centralizada, ofuscação determinística de PII (`PiiMasker`), anonimização nos coletores (Loki/Tempo) e gestão segura de segredos com `.env.example`.
+3. [**Estudo de Caso & Guia: DevSecOps Shift-Left — Pre-Commit Hooks, Semgrep LGPD & CI/CD**](./docs/devsecops-precommit-lgpd-ci-cd.md)
+   - Implementação de barreiras de proteção automatizadas em dupla camada (local e GitHub Actions), auditoria estática de CPF/CNPJ com Semgrep, Gitleaks e testes de regressão de regras de segurança.
