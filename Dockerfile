@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1.7
-FROM eclipse-temurin:21-jre-jammy
+FROM eclipse-temurin:25-jre-jammy
 WORKDIR /app
 
 # 1. Copia o Agente Java do Pyroscope que está na sua máquina (ou mantenha o ADD se preferir)

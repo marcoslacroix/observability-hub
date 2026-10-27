@@ -1,6 +1,6 @@
 # Observability Hub — Spring Boot 4 + LGTM Stack + Pyroscope + Kafka + Jira + k6
 
-Plataforma centralizada de **Observabilidade, Métricas de Negócio, Alertas e Engenharia** em **Spring Boot 4.1.1 (Java 21)**, integrando:
+Plataforma centralizada de **Observabilidade, Métricas de Negócio, Alertas e Engenharia** em **Spring Boot 4.1.1 (Java 25)**, integrando:
 
 - **Traces Distribuídos**: OpenTelemetry + **Grafana Tempo**
 - **Logs Estruturados (correlacionados por `traceId` e `spanId`)**: OpenTelemetry + **Grafana Loki**

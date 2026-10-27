@@ -1,4 +1,4 @@
-package com.example.observability;
+package com.example.observability.config;
 
 import java.time.Instant;
 import java.util.Map;
