@@ -20,7 +20,8 @@ Plataforma centralizada de **Observabilidade, Métricas de Negócio, Alertas e E
 observability-hub/
 ├── Dockerfile
 ├── docker-compose.yml
-├── .env
+├── .env.example                       # Modelo de variáveis de ambiente sanitizado (copie para .env)
+├── .env                               # Variáveis locais com credenciais reais (ignorado pelo git)
 ├── otel-collector-config.yaml
 ├── tempo.yaml
 ├── loki.yaml
@@ -297,3 +298,14 @@ O arquivo [`grafana/provisioning/alerting/alerts.yml`](./grafana/provisioning/al
    - Contadores de publicação e consumo (`kafka_messages_published_total` e `kafka_messages_consumed_total`), Consumer Lag residual, Timers de latência do Producer e do Consumer.
 6. **Jira - Issues, Sprints, Velocidade & Lead Time** (`/d/jira-overview-dashboard`)
    - Métricas de engenharia e produtividade integradas à API v3 do Jira Cloud via Infinity Datasource.
+
+---
+
+## 📚 Estudos de Engenharia & Documentação Técnica
+
+O repositório inclui estudos aprofundados com análises empíricas, fundamentação teórica e padrões arquiteturais:
+
+1. [**Estudo de Caso: Platform Threads vs. Virtual Threads no Java 25**](./docs/virtual-threads-java25-benchmark.md)
+   - Benchmark comparativo sob teste de estresse k6 avaliando RPS, latência, footprint de memória, comportamento sob I/O bloqueante no Kafka e unpinning de threads na JVM.
+2. [**Estudo de Caso & Guia: Gestão de Segredos, Privacy by Design e Conformidade LGPD**](./docs/seguranca-lgpd-e-gestao-de-segredos.md)
+   - Análise de riscos de vazamento em observabilidade centralizada, ofuscação determinística de PII (`PiiMasker`), anonimização nos coletores (Loki/Tempo) e gestão segura de segredos com `.env.example`.

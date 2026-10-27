@@ -5,6 +5,7 @@ import java.util.Map;
 import com.example.observability.dto.TaxResult;
 import com.example.observability.dto.UserDto;
 import com.example.observability.service.MicrometerService;
+import com.example.observability.util.PiiMasker;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -30,7 +31,7 @@ public class MicrometerController {
     public ResponseEntity<Map<String, String>> registerUser(@RequestBody UserDto dto) {
         log.info("Iniciando registo de utilizador: {}", dto);
         micrometerService.registerUser(dto);
-        log.info("Utilizador registado com sucesso: {}", dto.email());
+        log.info("Utilizador registado com sucesso: {}", PiiMasker.maskEmail(dto != null ? dto.email() : null));
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(Map.of("status", "success", "message", "Utilizador registado com sucesso"));
     }

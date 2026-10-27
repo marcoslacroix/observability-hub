@@ -1,6 +1,7 @@
 package com.example.observability.service;
 
 import com.example.observability.dto.UserRegisteredEvent;
+import com.example.observability.util.PiiMasker;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
@@ -49,8 +50,8 @@ public class KafkaConsumerService {
     public void consumeUserRegisteredEvent(ConsumerRecord<String, String> record) {
         Timer.Sample sample = Timer.start(meterRegistry);
         try {
-            log.info("Consumindo evento de registo do tópico [{}], partição={}, offset={}, key={}, payload={}",
-                    record.topic(), record.partition(), record.offset(), record.key(), record.value());
+            log.info("Consumindo evento de registo do tópico [{}], partição={}, offset={}, key={}",
+                    record.topic(), record.partition(), record.offset(), PiiMasker.maskEmail(record.key()));
 
             UserRegisteredEvent event = jsonMapper.readValue(record.value(), UserRegisteredEvent.class);
             consumedUserEvents.addLast(event);
@@ -65,7 +66,7 @@ public class KafkaConsumerService {
                     .register(meterRegistry));
 
             log.info("Evento de utilizador processado pelo consumer com sucesso: eventId={}, email={}",
-                    event.eventId(), event.email());
+                    event.eventId(), PiiMasker.maskEmail(event.email()));
         } catch (Exception e) {
             consumedFailureCounter.increment();
             sample.stop(Timer.builder("kafka.consumer.processing.time")
@@ -115,7 +116,9 @@ public class KafkaConsumerService {
     }
 
     public List<UserRegisteredEvent> getConsumedUserEvents() {
-        return List.copyOf(consumedUserEvents);
+        return consumedUserEvents.stream()
+                .map(UserRegisteredEvent::toMasked)
+                .toList();
     }
 
     public List<Map<String, Object>> getConsumedCustomEvents() {

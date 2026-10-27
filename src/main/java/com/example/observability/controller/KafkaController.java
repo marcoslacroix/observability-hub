@@ -29,8 +29,8 @@ public class KafkaController {
 
     @PostMapping("/publish")
     public ResponseEntity<Map<String, String>> publishMessage(@RequestBody KafkaMessageRequest request) {
-        log.info("Recebida requisição para publicar mensagem no Kafka: {}", request);
-        kafkaProducerService.publishCustomEvent(request.key(), request.message());
+        log.info("Recebida requisição para publicar mensagem no Kafka: key={}", request != null ? request.key() : null);
+        kafkaProducerService.publishCustomEvent(request != null ? request.key() : null, request != null ? request.message() : null);
         return ResponseEntity.status(HttpStatus.ACCEPTED)
                 .body(Map.of(
                         "status", "accepted",

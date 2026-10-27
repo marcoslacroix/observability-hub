@@ -3,6 +3,7 @@ package com.example.observability.service;
 import com.example.observability.dto.UserDto;
 import com.example.observability.dto.UserRegisteredEvent;
 import com.example.observability.exception.BusinessValidationException;
+import com.example.observability.util.PiiMasker;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
@@ -62,8 +63,8 @@ public class KafkaProducerService {
             );
 
             String payload = jsonMapper.writeValueAsString(event);
-            log.info("Publicando evento de utilizador registado no tópico [{}]: key={}, payload={}",
-                    userRegistrationsTopic, userDto.email(), payload);
+            log.info("Publicando evento de utilizador registado no tópico [{}]: key={}, eventId={}",
+                    userRegistrationsTopic, PiiMasker.maskEmail(userDto.email()), event.eventId());
 
             kafkaTemplate.send(userRegistrationsTopic, userDto.email(), payload)
                     .whenComplete((result, ex) -> {
