@@ -46,7 +46,7 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-health</artifactId>
         </dependency>
-        
+
         <!-- Starter Web (ou WebFlux) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

@@ -1,0 +1,21 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace
+      - id: check-yaml
+        exclude: '^load-tests/.*'
+
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.18.4
+    hooks:
+      - id: gitleaks
+
+  - repo: local
+    hooks:
+      - id: semgrep-lgpd
+        name: Semgrep LGPD Security Rules
+        entry: semgrep scan --config .semgrep/lgpd-rules.yml --error --metrics=off
+        language: system
+        pass_filenames: false
+        always_run: true

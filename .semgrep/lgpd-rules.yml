@@ -1,0 +1,14 @@
+rules:
+  - id: lgpd-cpf-hardcoded
+    patterns:
+      - pattern-regex: '\b\d{3}\.\d{3}\.\d{3}-\d{2}\b'
+    message: "Possível vazamento de dado pessoal (CPF) detectado no código. Utilize dados mascarados ou geradores dinâmicos."
+    severity: ERROR
+    languages: [javascript, typescript, python, java, csharp, php]
+
+  - id: lgpd-cnpj-hardcoded
+    patterns:
+      - pattern-regex: '\b\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2}\b'
+    message: "Possível CNPJ real detectado no código. Verifique se é dado sensível/corporativo protegido."
+    severity: WARNING
+    languages: [javascript, typescript, python, java, csharp, php]

@@ -1,0 +1,48 @@
+name: CI/CD - Pre-Commit & LGPD Security Rules
+
+on:
+  push:
+    branches: [ master, main ]
+  pull_request:
+    branches: [ master, main ]
+
+jobs:
+  pre-commit-and-lgpd:
+    name: Run Pre-Commit & LGPD Rules
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install Pre-Commit and Semgrep
+        run: |
+          python -m pip install --upgrade pip
+          pip install pre-commit semgrep
+
+      - name: Validate Semgrep LGPD Rule Syntax
+        run: |
+          semgrep --validate --config .semgrep/lgpd-rules.yml
+
+      - name: Test LGPD Detection (Rule Verification)
+        run: |
+          echo 'public class LgpdViolation { String cpf = "123.456.789-00"; }' > test-lgpd-violation.java
+          if semgrep scan --config .semgrep/lgpd-rules.yml --error --metrics=off test-lgpd-violation.java; then
+            echo "ERRO: A regra Semgrep LGPD deveria ter detectado o CPF hardcoded mas nao detectou!"
+            exit 1
+          else
+            echo "SUCESSO: A regra Semgrep LGPD detectou e bloqueou o CPF conforme esperado."
+          fi
+          rm test-lgpd-violation.java
+
+      - name: Run Pre-Commit Hooks (Lint, YAML, Gitleaks, Semgrep LGPD)
+        run: |
+          pre-commit run --all-files --show-diff-on-failure
