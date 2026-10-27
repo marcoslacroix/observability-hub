@@ -64,7 +64,7 @@ Criada uma classe utilitária de alto desempenho para ofuscar dados pessoais pre
 
 - **E-mails**: `usuario@example.com` $\rightarrow$ `u***o@example.com`
   - Mantém o caractere inicial e final do identificador para conferência visual.
-  - Preserva o domínio corporativo `@example.com`, permitindo investigar problemas com provedores específicos sem expor a pessoa física.
+  - Preserva o domínio do provedor `@example.com`, permitindo investigar problemas com provedores específicos sem expor a pessoa física.
 - **Nomes**: `Marcos Daniel Lacroix` $\rightarrow$ `M*** D*** L***`
   - Preserva as iniciais de cada termo, impedindo a identificação do titular por terceiros.
 
