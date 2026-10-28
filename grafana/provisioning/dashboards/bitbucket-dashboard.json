@@ -1,0 +1,902 @@
+{
+  "uid": "bitbucket-overview-dashboard",
+  "title": "Bitbucket - Repositórios, PRs, Commits, Branches & Pipelines",
+  "tags": ["bitbucket", "git", "ci-cd", "pull-requests", "devops"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "editable": true,
+  "refresh": "1m",
+  "time": {
+    "from": "now-30d",
+    "to": "now"
+  },
+  "templating": {
+    "list": [
+      {
+        "name": "workspace",
+        "label": "Workspace Bitbucket",
+        "type": "textbox",
+        "query": "${BITBUCKET_WORKSPACE}",
+        "current": {
+          "selected": true,
+          "text": "${BITBUCKET_WORKSPACE}",
+          "value": "${BITBUCKET_WORKSPACE}"
+        },
+        "hide": 0
+      },
+      {
+        "name": "repo_slug",
+        "label": "Repositório",
+        "type": "query",
+        "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "bitbucket" },
+        "definition": "",
+        "query": {
+          "queryType": "infinity",
+          "infinityQuery": {
+            "refId": "A",
+            "type": "json",
+            "source": "url",
+            "format": "table",
+            "parser": "uql",
+            "url": "https://api.bitbucket.org/2.0/repositories/${workspace}?pagelen=100&sort=-updated_on",
+            "url_options": { "method": "GET" },
+            "uql": "parse-json\n| scope \"values\"\n| project \"__text\"=\"name\", \"__value\"=\"slug\""
+          }
+        },
+        "refresh": 1,
+        "includeAll": false,
+        "multi": false,
+        "current": {},
+        "hide": 0
+      },
+      {
+        "name": "pr_state",
+        "label": "Status dos PRs",
+        "type": "custom",
+        "query": "OPEN,MERGED,DECLINED,SUPERSEDED",
+        "current": {
+          "selected": true,
+          "text": "OPEN",
+          "value": "OPEN"
+        },
+        "options": [
+          { "selected": true, "text": "OPEN", "value": "OPEN" },
+          { "selected": false, "text": "MERGED", "value": "MERGED" },
+          { "selected": false, "text": "DECLINED", "value": "DECLINED" },
+          { "selected": false, "text": "SUPERSEDED", "value": "SUPERSEDED" }
+        ],
+        "hide": 0
+      }
+    ]
+  },
+  "panels": [
+    {
+      "type": "row",
+      "title": "Visão Geral do Workspace & Repositório Selecionado",
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "id": 1,
+      "panels": []
+    },
+    {
+      "type": "stat",
+      "title": "Total de Repositórios no Workspace",
+      "id": 2,
+      "gridPos": { "h": 4, "w": 4, "x": 0, "y": 1 },
+      "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "bitbucket" },
+      "fieldConfig": {
+        "defaults": {
+          "noValue": "0",
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{ "color": "blue", "value": null }]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "/^Total$/", "values": false },
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "bitbucket" },
+          "type": "json",
+          "source": "url",
+          "format": "table",
+          "parser": "uql",
+          "url": "https://api.bitbucket.org/2.0/repositories/${workspace}?pagelen=1",
+          "url_options": { "method": "GET" },
+          "uql": "parse-json\n| project \"Total\"=\"size\""
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Pull Requests Abertos (Repo)",
+      "id": 3,
+      "gridPos": { "h": 4, "w": 4, "x": 4, "y": 1 },
+      "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "bitbucket" },
+      "fieldConfig": {
+        "defaults": {
+          "noValue": "0",
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{ "color": "orange", "value": null }]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "/^Total$/", "values": false },
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "bitbucket" },
+          "type": "json",
+          "source": "url",
+          "format": "table",
+          "parser": "uql",
+          "url": "https://api.bitbucket.org/2.0/repositories/${workspace}/${repo_slug}/pullrequests?state=OPEN&pagelen=1",
+          "url_options": { "method": "GET" },
+          "uql": "parse-json\n| project \"Total\"=\"size\""
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Pull Requests Mergeados (Repo)",
+      "id": 4,
+      "gridPos": { "h": 4, "w": 4, "x": 8, "y": 1 },
+      "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "bitbucket" },
+      "fieldConfig": {
+        "defaults": {
+          "noValue": "0",
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{ "color": "green", "value": null }]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "/^Total$/", "values": false },
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "bitbucket" },
+          "type": "json",
+          "source": "url",
+          "format": "table",
+          "parser": "uql",
+          "url": "https://api.bitbucket.org/2.0/repositories/${workspace}/${repo_slug}/pullrequests?state=MERGED&pagelen=1",
+          "url_options": { "method": "GET" },
+          "uql": "parse-json\n| project \"Total\"=\"size\""
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Total de Branches Ativas (Repo)",
+      "id": 5,
+      "gridPos": { "h": 4, "w": 4, "x": 12, "y": 1 },
+      "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "bitbucket" },
+      "fieldConfig": {
+        "defaults": {
+          "noValue": "0",
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{ "color": "purple", "value": null }]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "/^Total$/", "values": false },
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "bitbucket" },
+          "type": "json",
+          "source": "url",
+          "format": "table",
+          "parser": "uql",
+          "url": "https://api.bitbucket.org/2.0/repositories/${workspace}/${repo_slug}/refs/branches?pagelen=1",
+          "url_options": { "method": "GET" },
+          "uql": "parse-json\n| project \"Total\"=\"size\""
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Total de Tags / Releases (Repo)",
+      "id": 6,
+      "gridPos": { "h": 4, "w": 4, "x": 16, "y": 1 },
+      "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "bitbucket" },
+      "fieldConfig": {
+        "defaults": {
+          "noValue": "0",
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{ "color": "teal", "value": null }]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "/^Total$/", "values": false },
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "bitbucket" },
+          "type": "json",
+          "source": "url",
+          "format": "table",
+          "parser": "uql",
+          "url": "https://api.bitbucket.org/2.0/repositories/${workspace}/${repo_slug}/refs/tags?pagelen=1",
+          "url_options": { "method": "GET" },
+          "uql": "parse-json\n| project \"Total\"=\"size\""
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Pipelines Executadas (Total)",
+      "id": 7,
+      "gridPos": { "h": 4, "w": 4, "x": 20, "y": 1 },
+      "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "bitbucket" },
+      "fieldConfig": {
+        "defaults": {
+          "noValue": "0",
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{ "color": "dark-blue", "value": null }]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "/^Total$/", "values": false },
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "bitbucket" },
+          "type": "json",
+          "source": "url",
+          "format": "table",
+          "parser": "uql",
+          "url": "https://api.bitbucket.org/2.0/repositories/${workspace}/${repo_slug}/pipelines/?pagelen=1",
+          "url_options": { "method": "GET" },
+          "uql": "parse-json\n| project \"Total\"=\"size\""
+        }
+      ]
+    },
+    {
+      "type": "row",
+      "title": "Repositórios & Projetos do Workspace",
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 5 },
+      "id": 8,
+      "panels": []
+    },
+    {
+      "type": "table",
+      "title": "Lista de Repositórios do Workspace (Clique para abrir no Bitbucket)",
+      "id": 9,
+      "gridPos": { "h": 8, "w": 16, "x": 0, "y": 6 },
+      "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "bitbucket" },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": { "type": "auto" },
+            "filterable": true
+          }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "Nome do Repositório" },
+            "properties": [
+              { "id": "custom.width", "value": 220 },
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "title": "Abrir repositório no Bitbucket",
+                    "url": "https://bitbucket.org/${workspace}/${__data.fields.Slug}",
+                    "targetBlank": true
+                  },
+                  {
+                    "title": "Filtrar este repositório no Dashboard",
+                    "url": "/d/bitbucket-overview-dashboard?var-workspace=${workspace}&var-repo_slug=${__data.fields.Slug}",
+                    "targetBlank": false
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Slug" },
+            "properties": [{ "id": "custom.width", "value": 160 }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Projeto" },
+            "properties": [{ "id": "custom.width", "value": 150 }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Linguagem" },
+            "properties": [{ "id": "custom.width", "value": 130 }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Branch Principal" },
+            "properties": [{ "id": "custom.width", "value": 140 }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Privado" },
+            "properties": [{ "id": "custom.width", "value": 90 }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Última Atualização" },
+            "properties": [{ "id": "custom.width", "value": 180 }]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": true,
+          "reducer": ["count"],
+          "countRows": true
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "bitbucket" },
+          "type": "json",
+          "source": "url",
+          "format": "table",
+          "parser": "uql",
+          "url": "https://api.bitbucket.org/2.0/repositories/${workspace}?pagelen=100&sort=-updated_on",
+          "url_options": { "method": "GET" },
+          "uql": "parse-json\n| scope \"values\"\n| project \"Nome do Repositório\"=\"name\", \"Slug\"=\"slug\", \"Projeto\"=\"project.name\", \"Linguagem\"=\"language\", \"Branch Principal\"=\"mainbranch.name\", \"Privado\"=\"is_private\", \"Última Atualização\"=\"updated_on\""
+        }
+      ]
+    },
+    {
+      "type": "piechart",
+      "title": "Distribuição de Repositórios por Linguagem",
+      "id": 10,
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 6 },
+      "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "bitbucket" },
+      "options": {
+        "pieType": "donut",
+        "displayLabels": ["name", "value", "percent"],
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "values": ["value", "percent"]
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "bitbucket" },
+          "type": "json",
+          "source": "url",
+          "format": "table",
+          "parser": "uql",
+          "url": "https://api.bitbucket.org/2.0/repositories/${workspace}?pagelen=100",
+          "url_options": { "method": "GET" },
+          "uql": "parse-json\n| scope \"values\"\n| project \"Linguagem\"=\"language\"\n| count \"Quantidade\" by \"Linguagem\""
+        }
+      ]
+    },
+    {
+      "type": "row",
+      "title": "Pull Requests (${repo_slug})",
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 14 },
+      "id": 11,
+      "panels": []
+    },
+    {
+      "type": "table",
+      "title": "Pull Requests do Repositório (Filtro: ${pr_state})",
+      "id": 12,
+      "gridPos": { "h": 9, "w": 16, "x": 0, "y": 15 },
+      "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "bitbucket" },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": { "type": "auto" },
+            "filterable": true
+          }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "ID" },
+            "properties": [
+              { "id": "custom.width", "value": 70 },
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "title": "Abrir PR no Bitbucket",
+                    "url": "https://bitbucket.org/${workspace}/${repo_slug}/pull-requests/${__value.raw}",
+                    "targetBlank": true
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Título" },
+            "properties": [{ "id": "custom.width", "value": 280 }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Autor" },
+            "properties": [{ "id": "custom.width", "value": 150 }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Origem -> Destino" },
+            "properties": [{ "id": "custom.width", "value": 200 }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Status" },
+            "properties": [{ "id": "custom.width", "value": 100 }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Comentários" },
+            "properties": [{ "id": "custom.width", "value": 110 }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Criado em" },
+            "properties": [{ "id": "custom.width", "value": 170 }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Atualizado em" },
+            "properties": [{ "id": "custom.width", "value": 170 }]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": true,
+          "reducer": ["count"],
+          "countRows": true
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "bitbucket" },
+          "type": "json",
+          "source": "url",
+          "format": "table",
+          "parser": "uql",
+          "url": "https://api.bitbucket.org/2.0/repositories/${workspace}/${repo_slug}/pullrequests?state=${pr_state}&pagelen=50",
+          "url_options": { "method": "GET" },
+          "uql": "parse-json\n| scope \"values\"\n| project \"ID\"=\"id\", \"Título\"=\"title\", \"Autor\"=\"author.display_name\", \"Origem -> Destino\"=concat(\"source.branch.name\", ' -> ', \"destination.branch.name\"), \"Status\"=\"state\", \"Comentários\"=\"comment_count\", \"Criado em\"=\"created_on\", \"Atualizado em\"=\"updated_on\""
+        }
+      ]
+    },
+    {
+      "type": "bargauge",
+      "title": "PRs por Autor (Atividade Recente)",
+      "id": 13,
+      "gridPos": { "h": 9, "w": 8, "x": 16, "y": 15 },
+      "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "bitbucket" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" }
+        },
+        "overrides": []
+      },
+      "options": {
+        "orientation": "horizontal",
+        "displayMode": "gradient",
+        "showUnfilled": true,
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "bitbucket" },
+          "type": "json",
+          "source": "url",
+          "format": "table",
+          "parser": "uql",
+          "url": "https://api.bitbucket.org/2.0/repositories/${workspace}/${repo_slug}/pullrequests?pagelen=50",
+          "url_options": { "method": "GET" },
+          "uql": "parse-json\n| scope \"values\"\n| project \"Autor\"=\"author.display_name\"\n| count \"Quantidade\" by \"Autor\""
+        }
+      ]
+    },
+    {
+      "type": "row",
+      "title": "Commits & Branches Recentes (${repo_slug})",
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 24 },
+      "id": 14,
+      "panels": []
+    },
+    {
+      "type": "table",
+      "title": "Últimos Commits no Repositório",
+      "id": 15,
+      "gridPos": { "h": 9, "w": 14, "x": 0, "y": 25 },
+      "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "bitbucket" },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": { "type": "auto" },
+            "filterable": true
+          }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "Hash" },
+            "properties": [
+              { "id": "custom.width", "value": 110 },
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "title": "Abrir commit no Bitbucket",
+                    "url": "https://bitbucket.org/${workspace}/${repo_slug}/commits/${__value.raw}",
+                    "targetBlank": true
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Mensagem" },
+            "properties": [{ "id": "custom.width", "value": 300 }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Autor" },
+            "properties": [{ "id": "custom.width", "value": 180 }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Data" },
+            "properties": [{ "id": "custom.width", "value": 180 }]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": true,
+          "reducer": ["count"],
+          "countRows": true
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "bitbucket" },
+          "type": "json",
+          "source": "url",
+          "format": "table",
+          "parser": "uql",
+          "url": "https://api.bitbucket.org/2.0/repositories/${workspace}/${repo_slug}/commits?pagelen=50",
+          "url_options": { "method": "GET" },
+          "uql": "parse-json\n| scope \"values\"\n| project \"Hash\"=substring(\"hash\", 0, 7), \"Mensagem\"=\"message\", \"Autor\"=\"author.raw\", \"Data\"=\"date\""
+        }
+      ]
+    },
+    {
+      "type": "table",
+      "title": "Branches & Últimos Commits",
+      "id": 16,
+      "gridPos": { "h": 9, "w": 10, "x": 14, "y": 25 },
+      "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "bitbucket" },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": { "type": "auto" },
+            "filterable": true
+          }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "Nome da Branch" },
+            "properties": [
+              { "id": "custom.width", "value": 200 },
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "title": "Abrir branch no Bitbucket",
+                    "url": "https://bitbucket.org/${workspace}/${repo_slug}/branch/${__value.raw}",
+                    "targetBlank": true
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Último Commit" },
+            "properties": [{ "id": "custom.width", "value": 110 }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Data do Commit" },
+            "properties": [{ "id": "custom.width", "value": 170 }]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": true,
+          "reducer": ["count"],
+          "countRows": true
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "bitbucket" },
+          "type": "json",
+          "source": "url",
+          "format": "table",
+          "parser": "uql",
+          "url": "https://api.bitbucket.org/2.0/repositories/${workspace}/${repo_slug}/refs/branches?pagelen=50&sort=-target.date",
+          "url_options": { "method": "GET" },
+          "uql": "parse-json\n| scope \"values\"\n| project \"Nome da Branch\"=\"name\", \"Último Commit\"=substring(\"target.hash\", 0, 7), \"Data do Commit\"=\"target.date\""
+        }
+      ]
+    },
+    {
+      "type": "row",
+      "title": "Bitbucket Pipelines (CI/CD) & Deployments (${repo_slug})",
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 34 },
+      "id": 17,
+      "panels": []
+    },
+    {
+      "type": "table",
+      "title": "Histórico de Execuções de Pipelines (CI/CD)",
+      "id": 18,
+      "gridPos": { "h": 9, "w": 16, "x": 0, "y": 35 },
+      "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "bitbucket" },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": { "type": "auto" },
+            "filterable": true
+          }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "Build #" },
+            "properties": [
+              { "id": "custom.width", "value": 80 },
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "title": "Abrir Pipeline no Bitbucket",
+                    "url": "https://bitbucket.org/${workspace}/${repo_slug}/pipelines/results/${__value.raw}",
+                    "targetBlank": true
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Status" },
+            "properties": [
+              { "id": "custom.width", "value": 120 },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Resultado" },
+            "properties": [{ "id": "custom.width", "value": 120 }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Branch / Ref" },
+            "properties": [{ "id": "custom.width", "value": 160 }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Gatilho" },
+            "properties": [{ "id": "custom.width", "value": 110 }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Duração (s)" },
+            "properties": [{ "id": "custom.width", "value": 110 }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Criado em" },
+            "properties": [{ "id": "custom.width", "value": 170 }]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": true,
+          "reducer": ["count"],
+          "countRows": true
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "bitbucket" },
+          "type": "json",
+          "source": "url",
+          "format": "table",
+          "parser": "uql",
+          "url": "https://api.bitbucket.org/2.0/repositories/${workspace}/${repo_slug}/pipelines/?pagelen=50&sort=-created_on",
+          "url_options": { "method": "GET" },
+          "uql": "parse-json\n| scope \"values\"\n| project \"Build #\"=\"build_number\", \"Status\"=\"state.name\", \"Resultado\"=\"state.result.name\", \"Branch / Ref\"=\"target.ref_name\", \"Gatilho\"=\"trigger.name\", \"Duração (s)\"=\"duration_in_seconds\", \"Criado em\"=\"created_on\""
+        }
+      ]
+    },
+    {
+      "type": "piechart",
+      "title": "Status dos Pipelines (Resultados)",
+      "id": 19,
+      "gridPos": { "h": 9, "w": 8, "x": 16, "y": 35 },
+      "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "bitbucket" },
+      "options": {
+        "pieType": "donut",
+        "displayLabels": ["name", "value", "percent"],
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "values": ["value", "percent"]
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "bitbucket" },
+          "type": "json",
+          "source": "url",
+          "format": "table",
+          "parser": "uql",
+          "url": "https://api.bitbucket.org/2.0/repositories/${workspace}/${repo_slug}/pipelines/?pagelen=50",
+          "url_options": { "method": "GET" },
+          "uql": "parse-json\n| scope \"values\"\n| project \"Resultado\"=\"state.result.name\"\n| count \"Total\" by \"Resultado\""
+        }
+      ]
+    },
+    {
+      "type": "row",
+      "title": "Projetos do Workspace Bitbucket",
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 44 },
+      "id": 20,
+      "panels": []
+    },
+    {
+      "type": "table",
+      "title": "Projetos Cadastrados no Workspace",
+      "id": 21,
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 45 },
+      "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "bitbucket" },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": { "type": "auto" },
+            "filterable": true
+          }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "Chave / Key" },
+            "properties": [
+              { "id": "custom.width", "value": 150 },
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "title": "Abrir projeto no Bitbucket",
+                    "url": "https://bitbucket.org/${workspace}/workspace/projects/${__value.raw}",
+                    "targetBlank": true
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Nome do Projeto" },
+            "properties": [{ "id": "custom.width", "value": 250 }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Privado" },
+            "properties": [{ "id": "custom.width", "value": 100 }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Descrição" },
+            "properties": [{ "id": "custom.width", "value": 350 }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Criado em" },
+            "properties": [{ "id": "custom.width", "value": 180 }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Atualizado em" },
+            "properties": [{ "id": "custom.width", "value": 180 }]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": true,
+          "reducer": ["count"],
+          "countRows": true
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "bitbucket" },
+          "type": "json",
+          "source": "url",
+          "format": "table",
+          "parser": "uql",
+          "url": "https://api.bitbucket.org/2.0/workspaces/${workspace}/projects?pagelen=100",
+          "url_options": { "method": "GET" },
+          "uql": "parse-json\n| scope \"values\"\n| project \"Chave / Key\"=\"key\", \"Nome do Projeto\"=\"name\", \"Privado\"=\"is_private\", \"Descrição\"=\"description\", \"Criado em\"=\"created_on\", \"Atualizado em\"=\"updated_on\""
+        }
+      ]
+    }
+  ]
+}

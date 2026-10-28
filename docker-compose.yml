@@ -78,6 +78,9 @@ services:
       - JIRA_ASSIGNEE_10_NAME=${JIRA_ASSIGNEE_10_NAME:-Dev 10}
       - JIRA_ASSIGNEE_11_LABEL=${JIRA_ASSIGNEE_11_LABEL:-Dev 11}
       - JIRA_ASSIGNEE_11_NAME=${JIRA_ASSIGNEE_11_NAME:-Dev 11}
+      - BITBUCKET_WORKSPACE=${BITBUCKET_WORKSPACE:-}
+      - BITBUCKET_USER=${BITBUCKET_USER:-}
+      - BITBUCKET_APP_PASSWORD=${BITBUCKET_APP_PASSWORD:-}
       # Configuração de SMTP e destinatário para alertas por e-mail
       - ALERT_EMAIL_TO=${EMAIL_JIRA}
       - GF_SMTP_ENABLED=true
@@ -119,6 +122,11 @@ services:
           -e "s|\$${JIRA_ASSIGNEE_11_LABEL}|$${JIRA_ASSIGNEE_11_LABEL}|g" \
           -e "s|\$${JIRA_ASSIGNEE_11_NAME}|$${JIRA_ASSIGNEE_11_NAME}|g" \
           /tmp/dashboards/jira-dashboard.json
+        if [ -f /tmp/dashboards/bitbucket-dashboard.json ]; then
+          sed -i \
+            -e "s|\$${BITBUCKET_WORKSPACE}|$${BITBUCKET_WORKSPACE}|g" \
+            /tmp/dashboards/bitbucket-dashboard.json
+        fi
         exec /run.sh
     volumes:
       - ./grafana/provisioning:/etc/grafana/provisioning

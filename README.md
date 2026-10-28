@@ -1,6 +1,6 @@
 # Observability Hub — Spring Boot 4 + LGTM Stack + Pyroscope + Kafka + Jira + k6
 
-Plataforma centralizada de **Observabilidade, Métricas de Negócio, Alertas e Engenharia** em **Spring Boot 4.1.1 (Java 25)**, integrando:
+Plataforma centralizada de **Observabilidade, Métricas de Negócio, Alertas, Segurança e Engenharia** em **Spring Boot 4.1.1 (Java 25)**, integrando:
 
 - **Traces Distribuídos**: OpenTelemetry + **Grafana Tempo**
 - **Logs Estruturados (correlacionados por `traceId` e `spanId`)**: OpenTelemetry + **Grafana Loki**
@@ -11,6 +11,8 @@ Plataforma centralizada de **Observabilidade, Métricas de Negócio, Alertas e E
 - **Health Check Customizado de Dependências Externas**: Spring Boot Actuator (`HealthIndicator`)
 - **Testes de Carga & Stress Automatizados**: **Grafana k6**
 - **Gestão Ágil & Produtividade**: Integração com a API v3 do **Jira Cloud** via Grafana Infinity Datasource
+- **Conformidade LGPD & Privacy by Design**: Ofuscação determinística de PII (`PiiMasker`) em logs e eventos Kafka
+- **DevSecOps Shift-Left & CI/CD**: Pre-commit hooks com Gitleaks, Semgrep (regras de CPF/CNPJ) e GitHub Actions
 
 ---
 
@@ -18,6 +20,16 @@ Plataforma centralizada de **Observabilidade, Métricas de Negócio, Alertas e E
 
 ```text
 observability-hub/
+├── .github/
+│   └── workflows/
+│       └── lgpd-scan.yml             # Pipeline CI/CD: Pre-commit, Gitleaks e Semgrep LGPD
+├── .pre-commit-config.yaml           # Configuração de hooks: trailing-whitespace, YAML, Gitleaks, Semgrep
+├── .semgrep/
+│   └── lgpd-rules.yml                # Regras de auditoria estática para detecção de CPF e CNPJ
+├── docs/                             # Estudos técnicos de engenharia e arquitetura
+│   ├── devsecops-precommit-lgpd-ci-cd.md
+│   ├── seguranca-lgpd-e-gestao-de-segredos.md
+│   └── virtual-threads-java25-benchmark.md
 ├── Dockerfile
 ├── docker-compose.yml
 ├── .env.example                       # Modelo de variáveis de ambiente sanitizado (copie para .env)
@@ -58,10 +70,9 @@ observability-hub/
     └── main/
         ├── java/com/example/observability/
         │   ├── ObservabilityHubApplication.java
-        │   ├── OpenTelemetryLogbackConfig.java
-        │   ├── CustomServiceHealthIndicator.java
         │   ├── config/
-        │   │   └── KafkaConfig.java
+        │   │   ├── KafkaConfig.java
+        │   │   └── OpenTelemetryLogbackConfig.java
         │   ├── controller/
         │   │   ├── AllocationController.java
         │   │   ├── KafkaController.java
@@ -74,11 +85,14 @@ observability-hub/
         │   ├── exception/
         │   │   ├── BusinessValidationException.java
         │   │   └── GlobalExceptionHandler.java
-        │   └── service/
-        │       ├── KafkaConsumerService.java
-        │       ├── KafkaProducerService.java
-        │       ├── LeakService.java
-        │       └── MicrometerService.java
+        │   ├── service/
+        │   │   ├── CustomServiceHealthIndicator.java
+        │   │   ├── KafkaConsumerService.java
+        │   │   ├── KafkaProducerService.java
+        │   │   ├── LeakService.java
+        │   │   └── MicrometerService.java
+        │   └── util/
+        │       └── PiiMasker.java     # Mascaramento determinístico de dados pessoais (LGPD)
         └── resources/
             └── application.yaml
 ```
@@ -298,6 +312,33 @@ O arquivo [`grafana/provisioning/alerting/alerts.yml`](./grafana/provisioning/al
    - Contadores de publicação e consumo (`kafka_messages_published_total` e `kafka_messages_consumed_total`), Consumer Lag residual, Timers de latência do Producer e do Consumer.
 6. **Jira - Issues, Sprints, Velocidade & Lead Time** (`/d/jira-overview-dashboard`)
    - Métricas de engenharia e produtividade integradas à API v3 do Jira Cloud via Infinity Datasource.
+
+---
+
+## 🛡️ DevSecOps, Pre-Commit & Conformidade LGPD
+
+O projeto adota o conceito de **Shift-Left Security**, aplicando portões de qualidade e segurança tanto localmente quanto no pipeline remoto:
+
+### 1. Camada Local (Git Hooks com `pre-commit`)
+- **Instalar ferramentas e registrar os hooks**:
+  ```powershell
+  pip install pre-commit semgrep
+  pre-commit install
+  ```
+- **Executar a suíte de validação em todos os arquivos**:
+  ```powershell
+  pre-commit run --all-files
+  ```
+  *Hooks configurados em [`.pre-commit-config.yaml`](./.pre-commit-config.yaml):*
+  - **Limpeza de Código**: `trailing-whitespace` e `check-yaml`.
+  - **Segredos & Credenciais**: **Gitleaks** inspeciona commits para evitar vazamento de chaves e tokens.
+  - **Regras de LGPD**: **Semgrep** analisa o código contra regex e AST de CPF e CNPJ não mascarados em [`.semgrep/lgpd-rules.yml`](./.semgrep/lgpd-rules.yml).
+
+### 2. Camada Centralizada (GitHub Actions CI/CD)
+O workflow [`.github/workflows/lgpd-scan.yml`](./.github/workflows/lgpd-scan.yml) executa automaticamente a cada `push` e `pull_request` nas branches `master`/`main`:
+1. **Validação Sintática**: `semgrep --validate` para assegurar integridade do arquivo de regras.
+2. **Teste Ativo de Regressão**: Injeta violação sintética de CPF em tempo de execução e valida se o Semgrep bloqueia o build.
+3. **Execução Completa do Pre-Commit**: Roda todos os hooks em ambiente Linux reproduzível.
 
 ---
 
