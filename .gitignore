@@ -35,3 +35,7 @@ build/
 .env.*
 .env.local
 !.env.example
+
+### Heap Dumps (JVM OutOfMemoryError) ###
+heapdumps/
+*.hprof

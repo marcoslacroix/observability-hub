@@ -2,6 +2,9 @@
 FROM eclipse-temurin:25-jre-jammy
 WORKDIR /app
 
+# Diretório para armazenamento de Heap Dumps automáticos em caso de OutOfMemoryError
+RUN mkdir -p /app/heapdumps
+
 # 1. Copia o Agente Java do Pyroscope que está na sua máquina (ou mantenha o ADD se preferir)
 ADD --checksum=sha256:ad738199a90734f7b8392bae1ab892027d411acb953ef1f00cd6e8e7c669ff8f \
     https://github.com/grafana/pyroscope-java/releases/download/v2.9.2/pyroscope.jar /app/pyroscope.jar

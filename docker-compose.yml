@@ -196,6 +196,7 @@ services:
       - "8080:8080"
     volumes:
       - ./target/observability-hub-0.0.1-SNAPSHOT.jar:/app/app.jar
+      - ./heapdumps:/app/heapdumps
     environment:
       - PYROSCOPE_APPLICATION_NAME=observability-hub
       - PYROSCOPE_SERVER_ADDRESS=http://pyroscope:4040
@@ -209,7 +210,7 @@ services:
       - OTEL_METRICS_EXPORTER=none
       - OTEL_TRACES_SAMPLER=parentbased_traceidratio
       - OTEL_TRACES_SAMPLER_ARG=0.1
-      - JAVA_TOOL_OPTIONS=-Xmx512m -Xms256m
+      - JAVA_TOOL_OPTIONS=-Xmx512m -Xms256m -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/app/heapdumps/
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:29092
     depends_on:
       - pyroscope

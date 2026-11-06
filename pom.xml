@@ -100,6 +100,9 @@
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
+				<configuration>
+					<jvmArguments>-Xmx512m -Xms256m -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=./heapdumps/</jvmArguments>
+				</configuration>
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
