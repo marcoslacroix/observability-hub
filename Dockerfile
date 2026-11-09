@@ -2,8 +2,8 @@
 FROM eclipse-temurin:25-jre-jammy
 WORKDIR /app
 
-# Diretório para armazenamento de Heap Dumps automáticos em caso de OutOfMemoryError
-RUN mkdir -p /app/heapdumps
+# Diretórios para armazenamento de Heap Dumps (OutOfMemoryError) e Thread Dumps (CPU >= 90%)
+RUN mkdir -p /app/heapdumps /app/threaddumps
 
 # 1. Copia o Agente Java do Pyroscope que está na sua máquina (ou mantenha o ADD se preferir)
 ADD --checksum=sha256:ad738199a90734f7b8392bae1ab892027d411acb953ef1f00cd6e8e7c669ff8f \
@@ -15,5 +15,5 @@ COPY opentelemetry-javaagent.jar /app/opentelemetry-javaagent.jar
 # 3. Copia o JAR da aplicação gerado pelo build
 COPY target/observability-hub-0.0.1-SNAPSHOT.jar /app/app.jar
 
-# 4. Executa a aplicação ativando ambos os agentes
-ENTRYPOINT ["java", "-javaagent:/app/opentelemetry-javaagent.jar", "-javaagent:/app/pyroscope.jar", "-jar", "/app/app.jar"]
+# 4. Executa a aplicação ativando ambos os agentes e gerando um nome único por execução para o Heap Dump
+ENTRYPOINT ["sh", "-c", "exec java -javaagent:/app/opentelemetry-javaagent.jar -javaagent:/app/pyroscope.jar -XX:HeapDumpPath=/app/heapdumps/heapdump-$(date +%Y%m%d-%H%M%S).hprof -jar /app/app.jar"]

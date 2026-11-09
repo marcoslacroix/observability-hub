@@ -52,3 +52,15 @@ Content-Type: application/json
 ### 10. Consultar Eventos Consumidos pelo Kafka Consumer (Utilizadores + Eventos Customizados)
 GET http://localhost:8080/kafka/consumed
 Accept: application/json
+
+### 11. Consultar Status do Monitor de CPU & Thread Dumps Gerados (Limiar: 90% CPU)
+GET http://localhost:8080/threaddump/status
+Accept: application/json
+
+### 12. Capturar Thread Dump Manualmente sob Demanda (.tdump em ./threaddumps)
+POST http://localhost:8080/threaddump/capture
+Accept: application/json
+
+### 13. Simular Pico de CPU (> 90%) por 15s para Disparar Thread Dump Automático
+GET http://localhost:8080/threaddump/stress-cpu?seconds=15
+Accept: application/json

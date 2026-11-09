@@ -26,6 +26,12 @@ app:
     topics:
       user-registrations: user-registrations-topic
       custom-events: observability-events-topic
+  threaddump:
+    enabled: ${THREAD_DUMP_ENABLED:true}
+    cpu-threshold: ${THREAD_DUMP_CPU_THRESHOLD:0.90}       # Dispara automaticamente quando CPU da JVM >= 90%
+    check-interval-ms: ${THREAD_DUMP_CHECK_INTERVAL_MS:5000} # Verifica o uso de CPU a cada 5 segundos
+    cooldown-ms: ${THREAD_DUMP_COOLDOWN_MS:60000}          # Intervalo minimo (60s) entre dumps consecutivos
+    output-dir: ${THREAD_DUMP_PATH:./threaddumps}          # Diretorio de saida (sempre cria novos arquivos .tdump)
 
 management:
   tracing:
@@ -52,7 +58,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: health, info, prometheus
+        include: health, info, prometheus, threaddump
   endpoint:
     health:
       show-details: always

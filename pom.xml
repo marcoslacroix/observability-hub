@@ -30,6 +30,7 @@
         <java.version>25</java.version>
         <maven.compiler.source>25</maven.compiler.source>
         <maven.compiler.target>25</maven.compiler.target>
+        <maven.build.timestamp.format>yyyyMMdd-HHmmss</maven.build.timestamp.format>
     </properties>
 	<dependencies>
 		<dependency>
@@ -101,7 +102,7 @@
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
 				<configuration>
-					<jvmArguments>-Xmx512m -Xms256m -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=./heapdumps/</jvmArguments>
+					<jvmArguments>-Xmx512m -Xms256m -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=./heapdumps/heapdump-${maven.build.timestamp}.hprof</jvmArguments>
 				</configuration>
 			</plugin>
 			<plugin>

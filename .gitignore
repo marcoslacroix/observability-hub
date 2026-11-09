@@ -36,6 +36,8 @@ build/
 .env.local
 !.env.example
 
-### Heap Dumps (JVM OutOfMemoryError) ###
+### Heap Dumps (JVM OutOfMemoryError) & Thread Dumps (CPU >= 90%) ###
 heapdumps/
 *.hprof
+threaddumps/
+*.tdump
