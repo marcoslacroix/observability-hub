@@ -64,3 +64,15 @@ Accept: application/json
 ### 13. Simular Pico de CPU (> 90%) por 15s para Disparar Thread Dump Automático
 GET http://localhost:8080/threaddump/stress-cpu?seconds=15
 Accept: application/json
+
+### 14. Consultar Status do Monitor de Garbage Collector & Últimos Eventos JMX
+GET http://localhost:8080/gc/status
+Accept: application/json
+
+### 15. Simular Pressão no GC Saudável (0% retenção -> 100% limpo no Minor GC) e Gravar Log em ./gclogs
+POST http://localhost:8080/gc/simulate?rounds=15&mbPerRound=20&retainPercent=0&triggerExplicitGc=false
+Accept: application/json
+
+### 16. Simular Pressão no GC com Retenção (30% retenção -> promoção para Old Gen + Full GC ao final)
+POST http://localhost:8080/gc/simulate?rounds=15&mbPerRound=20&retainPercent=30&triggerExplicitGc=true
+Accept: application/json

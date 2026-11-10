@@ -32,6 +32,9 @@ app:
     check-interval-ms: ${THREAD_DUMP_CHECK_INTERVAL_MS:5000} # Verifica o uso de CPU a cada 5 segundos
     cooldown-ms: ${THREAD_DUMP_COOLDOWN_MS:60000}          # Intervalo minimo (60s) entre dumps consecutivos
     output-dir: ${THREAD_DUMP_PATH:./threaddumps}          # Diretorio de saida (sempre cria novos arquivos .tdump)
+  gclog:
+    enabled: ${GC_LOG_ENABLED:true}                        # Escuta notificacoes JMX do Garbage Collector em tempo real
+    output-dir: ${GC_LOG_PATH:./gclogs}                    # Diretorio de saida dos relatorios de simulacao de GC (.log)
 
 management:
   tracing:

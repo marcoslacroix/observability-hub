@@ -5,8 +5,8 @@ import com.example.observability.service.ThreadDumpService.ThreadDumpResult;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
@@ -41,8 +41,7 @@ public class ThreadDumpController {
 	/**
 	 * Dispara manualmente a geracao de um Thread Dump completo em disco.
 	 */
-	@GetMapping("/capture")
-	@PostMapping("/capture")
+	@RequestMapping(value = "/capture", method = {RequestMethod.GET, RequestMethod.POST})
 	public ThreadDumpResult captureManualDump() {
 		log.info("Captura manual de Thread Dump solicitada via endpoint /threaddump/capture");
 		return threadDumpService.captureThreadDump("manual", -1.0);

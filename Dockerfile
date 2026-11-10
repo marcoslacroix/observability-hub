@@ -2,8 +2,8 @@
 FROM eclipse-temurin:25-jre-jammy
 WORKDIR /app
 
-# Diretórios para armazenamento de Heap Dumps (OutOfMemoryError) e Thread Dumps (CPU >= 90%)
-RUN mkdir -p /app/heapdumps /app/threaddumps
+# Diretórios para armazenamento de Heap Dumps (OutOfMemoryError), Thread Dumps (CPU >= 90%) e Logs de GC
+RUN mkdir -p /app/heapdumps /app/threaddumps /app/gclogs
 
 # 1. Copia o Agente Java do Pyroscope que está na sua máquina (ou mantenha o ADD se preferir)
 ADD --checksum=sha256:ad738199a90734f7b8392bae1ab892027d411acb953ef1f00cd6e8e7c669ff8f \

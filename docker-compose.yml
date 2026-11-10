@@ -199,6 +199,7 @@ services:
       - ./target/observability-hub-0.0.1-SNAPSHOT.jar:/app/app.jar
       - ./heapdumps:/app/heapdumps
       - ./threaddumps:/app/threaddumps
+      - ./gclogs:/app/gclogs
     environment:
       - PYROSCOPE_APPLICATION_NAME=observability-hub
       - PYROSCOPE_SERVER_ADDRESS=http://pyroscope:4040
@@ -212,8 +213,9 @@ services:
       - OTEL_METRICS_EXPORTER=none
       - OTEL_TRACES_SAMPLER=parentbased_traceidratio
       - OTEL_TRACES_SAMPLER_ARG=0.1
-      - JAVA_TOOL_OPTIONS=-Xmx512m -Xms256m -XX:+HeapDumpOnOutOfMemoryError -XX:+ExitOnOutOfMemoryError
+      - JAVA_TOOL_OPTIONS=-Xmx512m -Xms256m -XX:+HeapDumpOnOutOfMemoryError -XX:+ExitOnOutOfMemoryError -Xlog:gc*:file=/app/gclogs/jvm-gc.log:time,uptime,level,tags:filecount=5,filesize=20M
       - THREAD_DUMP_PATH=/app/threaddumps
+      - GC_LOG_PATH=/app/gclogs
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:29092
     depends_on:
       - pyroscope
